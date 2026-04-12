@@ -1,0 +1,4 @@
+type Contract @model {
+  id: ID!
+  contractType: String!
+}

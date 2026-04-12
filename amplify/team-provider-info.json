@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-contractmanager2-dev-42699-authRole",
+      "UnauthRoleArn": "arn:aws:iam::311064037995:role/amplify-contractmanager2-dev-42699-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::311064037995:role/amplify-contractmanager2-dev-42699-authRole",
+      "Region": "us-east-2",
+      "DeploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
+      "UnauthRoleName": "amplify-contractmanager2-dev-42699-unauthRole",
+      "StackName": "amplify-contractmanager2-dev-42699",
+      "StackId": "arn:aws:cloudformation:us-east-2:311064037995:stack/amplify-contractmanager2-dev-42699/58bc0e00-367c-11f1-8227-0a36474641c1",
+      "AmplifyAppId": "d3fwqc96hd9s7m"
+    },
+    "categories": {
+      "api": {
+        "contractmanager2": {}
+      }
+    }
+  }
+}
