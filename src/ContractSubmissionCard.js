@@ -28,28 +28,26 @@ const handleUpload = async () => {
   try {
     const uploaded = await Promise.all(
       files.map(async (file) => {
-        // ✅ EXPLICIT public prefix
-        const s3Path = `public/uploads/review/${Date.now()}-${file.name}`;
+        const tempId = crypto.randomUUID();
+        const s3Path = `public/uploads/review/${tempId}.pdf`;
 
         const uploadTask = uploadData({
           path: s3Path,
           data: file,
           options: {
-            accessLevel: "public", // permissions
-            contentType: file.type
-          }
+            accessLevel: "public",
+            contentType: file.type,
+          },
         });
 
         const uploadResult = await uploadTask.result;
-
-        console.log("AMPLIFY UPLOAD RESULT:", uploadResult);
 
         return {
           contractNumber: "",
           contractType: "MINIMUM_PRICE",
           pdfType: "contract",
 
-          // ✅ THIS NOW MATCHES ACTUAL S3 KEY
+          // ✅ immutable, correct, guaranteed to exist
           pictureKey: uploadResult.path,
 
           signedUrl: URL.createObjectURL(file),
