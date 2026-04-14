@@ -27,26 +27,32 @@ const handleUpload = async () => {
   try {
     const uploaded = await Promise.all(
       files.map(async (file) => {
-        const logicalKey = `uploads/review/${Date.now()}-${file.name}`;
+        const logicalPath = `uploads/review/${Date.now()}-${file.name}`;
 
-        const { result } = uploadData({
-          path: logicalKey,
-          data: file
+        const uploadTask = uploadData({
+          path: logicalPath,
+          data: file,
         });
 
-        const uploadResult = await result;
+        console.log("AMPLIFY UPLOAD TASK:", uploadTask);
 
-        console.log("REAL S3 KEY:", uploadResult.key); // ← keep this temporarily
+        const uploadResult = await uploadTask.result;
+
+        console.log("AMPLIFY UPLOAD RESULT:", uploadResult);
+
+        const realPath =
+          uploadResult?.path ??
+          uploadResult?.key ??
+          uploadResult?.location;
+
+        console.log("RESOLVED REAL PATH:", realPath);
 
         return {
           contractNumber: "",
           contractType: "MINIMUM_PRICE",
           pdfType: "contract",
-
-          // ✅ THIS IS THE ONLY CORRECT KEY
-          pictureKey: uploadResult.key,
-
-          signedUrl: URL.createObjectURL(file)
+          pictureKey: realPath,
+          signedUrl: URL.createObjectURL(file),
         };
       })
     );
@@ -60,8 +66,6 @@ const handleUpload = async () => {
     setLoading(false);
   }
 };
-
-
   const handleEdit = (index, field, value) => {
     setContracts((prev) => {
       const copy = [...prev];
