@@ -27,7 +27,7 @@
         "submitEditedContract": {},
         "submitEditedContractLambda": {
           "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
-          "s3Key": "amplify-builds/submitEditedContractLambda-306f6e77373677384356-build.zip"
+          "s3Key": "amplify-builds/submitEditedContractLambda-4f61574a5832514d704a-build.zip"
         }
       }
     }
