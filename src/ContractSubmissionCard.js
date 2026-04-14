@@ -29,18 +29,20 @@ const handleUpload = async () => {
     const uploaded = await Promise.all(
       files.map(async (file) => {
         const tempId = crypto.randomUUID();
-        const s3Path = `public/uploads/review/${tempId}.pdf`;
+const tempId = crypto.randomUUID();
+const s3Path = `uploads/review/${tempId}.pdf`;
 
-        const uploadTask = uploadData({
-          path: s3Path,
-          data: file,
-          options: {
-            accessLevel: "public",
-            contentType: file.type,
-          },
-        });
+const uploadTask = uploadData({
+  path: s3Path,
+  data: file,
+  options: {
+    accessLevel: "public",
+    contentType: file.type,
+  },
+});
 
-        const uploadResult = await uploadTask.result;
+const uploadResult = await uploadTask.result
+
 
         return {
           contractNumber: "",
