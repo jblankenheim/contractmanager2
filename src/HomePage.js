@@ -41,11 +41,14 @@ export default function HomePage({ user, signOut }) {
 
       const withMedia = await Promise.all(
         items.map(async (c) => {
-          const keys = [
-            c.pictureKey,
-            c.pictureKey2,
-            c.pictureKey3,
-          ].filter(Boolean);
+          
+const keys = [
+  c.pictureKey,
+  c.addendumKey1,
+  c.addendumKey2,
+  c.duplicateKey,
+].filter(Boolean);
+
 
           if (!keys.length) return { ...c, media: [] };
 
