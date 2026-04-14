@@ -20,6 +20,7 @@ export default function ContractSubmissionCard({ onCancel }) {
   // upload files → create review objects
 
 
+
 const handleUpload = async () => {
   if (!files.length) return;
 
@@ -28,28 +29,29 @@ const handleUpload = async () => {
   try {
     const uploaded = await Promise.all(
       files.map(async (file) => {
+        // ✅ generate a truly temporary, immutable key
         const tempId = crypto.randomUUID();
-const tempId = crypto.randomUUID();
-const s3Path = `uploads/review/${tempId}.pdf`;
+        const s3Path = `uploads/review/${tempId}.pdf`;
 
-const uploadTask = uploadData({
-  path: s3Path,
-  data: file,
-  options: {
-    accessLevel: "public",
-    contentType: file.type,
-  },
-});
+        const uploadTask = uploadData({
+          path: s3Path,
+          data: file,
+          options: {
+            accessLevel: "public",
+            contentType: file.type,
+          },
+        });
 
-const uploadResult = await uploadTask.result
+        const uploadResult = await uploadTask.result;
 
+        console.log("AMPLIFY UPLOAD RESULT:", uploadResult);
 
         return {
           contractNumber: "",
           contractType: "MINIMUM_PRICE",
           pdfType: "contract",
 
-          // ✅ immutable, correct, guaranteed to exist
+          // ✅ this will now correspond to a REAL S3 object
           pictureKey: uploadResult.path,
 
           signedUrl: URL.createObjectURL(file),
