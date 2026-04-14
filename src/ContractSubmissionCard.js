@@ -11,7 +11,7 @@ const CONTRACT_TYPES = [
   "UNASSIGNED"
 ];
 
-export default function ContractSubmissionCard({ onCancel }) {
+export default function ContractSubmissionCard({ onCancel, onSuccess }) {
   const [files, setFiles] = useState([]);
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -77,37 +77,42 @@ const handleUpload = async () => {
     });
   };
 
-  const submitEditedContract = async (contract, index) => {
-    setSubmittingIndex(index);
+const submitEditedContract = async (contract, index) => {
+  setSubmittingIndex(index);
 
-    try {
-      
+  try {
+    const payload = {
+      sourceKey: contract.pictureKey,
+      contractNumber: contract.contractNumber,
+      contractType: contract.contractType,
+      pdfType: contract.pdfType
+    };
 
+    const operation = await post({
+      apiName: "contractsAPI",
+      path: "/submitEditedContract",
+      options: { body: payload }
+    });
 
-const payload = {
-  sourceKey: contract.pictureKey,  
-  contractNumber: contract.contractNumber,
-  contractType: contract.contractType,
-  pdfType: contract.pdfType
+    const response = await operation.response;
+    const data = await response.body.json(); // ✅ Lambda return value
+
+    console.log("Submission success:", data);
+
+    alert("Submitted successfully!");
+
+    // ✅ tell parent to close modal & refresh
+    if (typeof onSuccess === "function") {
+      onSuccess(data);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Submission failed");
+  } finally {
+    setSubmittingIndex(null);
+  }
 };
 
-
-
-
-      await post({
-        apiName: "contractsAPI",
-        path: "/submitEditedContract",
-        options: { body: payload }
-      });
-
-      alert("Submitted successfully!");
-    } catch (err) {
-      console.error(err);
-      alert("Submission failed");
-    } finally {
-      setSubmittingIndex(null);
-    }
-  };
 
   return (
     <div style={{ padding: 20, maxWidth: 1000, margin: "auto", color: "white" }}>
