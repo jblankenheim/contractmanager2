@@ -1,166 +1,164 @@
-const AWS = require("aws-sdk");
+const {
+  S3Client,
+  CopyObjectCommand,
+  DeleteObjectCommand,
+} = require("@aws-sdk/client-s3");
 
-const s3 = new AWS.S3();
-const dynamodb = new AWS.DynamoDB.DocumentClient();
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const {
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+  UpdateCommand,
+} = require("@aws-sdk/lib-dynamodb");
 
-const TABLE_NAME = process.env.CONTRACT_TABLE;
-const BUCKET = process.env.BUCKET_NAME;
+const s3 = new S3Client({});
+const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+
+const TABLE_NAME = process.env.TABLE_NAME;
+const BUCKET = process.env.CONTRACT_BUCKET;
+
+const headers = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "*",
+  "Content-Type": "application/json",
+};
 
 exports.handler = async (event) => {
-  console.log("EVENT:", JSON.stringify(event, null, 2));
+  try {
+    const body = JSON.parse(event.body || "{}");
 
-  const { pictureKey, contractType, contractNumber, pdfType } =
-    JSON.parse(event.body || event);
-
-  // 🚨 enforce uploads only
-  if (!pictureKey || !pictureKey.startsWith("uploads/")) {
-    return {
-      statusCode: 400,
-      body: "Invalid file path. Must start with uploads/"
-    };
-  }
-
-  const contractId = `${contractType}_${contractNumber}`;
-
-  const existing = await dynamodb.get({
-    TableName: TABLE_NAME,
-    Key: { id: contractId }
-  }).promise();
-
-  let contract = existing.Item;
-
-  const moveFile = async (oldKey, newKey) => {
-    await s3.copyObject({
-      Bucket: BUCKET,
-      CopySource: `${BUCKET}/${oldKey}`,
-      Key: newKey
-    }).promise();
-
-    await s3.deleteObject({
-      Bucket: BUCKET,
-      Key: oldKey
-    }).promise();
-
-    return newKey;
-  };
-
-  const basePath = `contracts/${contractType}/${contractNumber}`;
-
-  // =====================================================
-  // NEW CONTRACT
-  // =====================================================
-  if (!contract) {
-    let finalKey = pictureKey;
-
-    if (pdfType === "contract") {
-      finalKey = await moveFile(
-        pictureKey,
-        `${basePath}/${Date.now()}.pdf`
-      );
-    }
-
-    contract = {
-      id: contractId,
+    const {
+      sourceKey,
       contractType,
       contractNumber,
-      pictureKey: finalKey,
-      contractDollars: 0,
-      contractBushels: "0",
-      remainingBushels: 0,
-      remainingDollars: 0
-    };
+      pdfType = "contract",
+    } = body;
 
-    await dynamodb.put({
-      TableName: TABLE_NAME,
-      Item: contract
-    }).promise();
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify(contract)
-    };
-  }
-
-  // =====================================================
-  // EXISTING CONTRACT
-  // =====================================================
-  if (pdfType === "contract") {
-
-    if (!contract.pictureKey) {
-      const newKey = await moveFile(
-        pictureKey,
-        `${basePath}/${Date.now()}.pdf`
-      );
-
-      await dynamodb.update({
-        TableName: TABLE_NAME,
-        Key: { id: contractId },
-        UpdateExpression: "SET pictureKey = :p",
-        ExpressionAttributeValues: {
-          ":p": newKey
-        }
-      }).promise();
-
-      return { statusCode: 200, body: "Updated pictureKey" };
-    }
-
-    const dupKey = await moveFile(
-      pictureKey,
-      `unassigned/${contractType}/${contractNumber}/${Date.now()}.pdf`
-    );
-
-    await dynamodb.update({
-      TableName: TABLE_NAME,
-      Key: { id: contractId },
-      UpdateExpression: "SET duplicateKey = :d",
-      ExpressionAttributeValues: {
-        ":d": dupKey
-      }
-    }).promise();
-
-    return { statusCode: 200, body: "Duplicate stored" };
-  }
-
-  // =====================================================
-  // ADDENDUM
-  // =====================================================
-  if (pdfType === "addendum") {
-
-    let targetKey;
-    let field;
-
-    if (!contract.addendumKey1) {
-      targetKey = `${basePath}/addendum_1/${Date.now()}.pdf`;
-      field = "addendumKey1";
-    } else if (!contract.addendumKey2) {
-      targetKey = `${basePath}/addendum_2/${Date.now()}.pdf`;
-      field = "addendumKey2";
-    } else {
+    if (!sourceKey || !contractType || !contractNumber) {
       return {
         statusCode: 400,
-        body: "Both addendum slots full"
+        headers,
+        body: JSON.stringify({ error: "Missing required fields" }),
       };
     }
 
-    const newKey = await moveFile(pictureKey, targetKey);
+    const contractId = `${contractType}_${contractNumber}`;
 
-    await dynamodb.update({
-      TableName: TABLE_NAME,
-      Key: { id: contractId },
-      UpdateExpression: `SET ${field} = :v`,
-      ExpressionAttributeValues: {
-        ":v": newKey
+    // ✅ sourceKey must already be the real S3 key (including public/)
+    const sourceKeyFull = sourceKey;
+
+    // ✅ deterministic destination
+    const destinationKey = `public/contracts/${contractType}/${contractNumber}.pdf`;
+
+    console.log("Processing contract submission:", {
+      contractId,
+      sourceKey: sourceKeyFull,
+      destinationKey,
+    });
+
+    // ------------------------------------------------------------
+    // 1. COPY OBJECT (CRITICAL)
+    // ------------------------------------------------------------
+    await s3.send(
+      new CopyObjectCommand({
+        Bucket: BUCKET,
+        CopySource: `${BUCKET}/${sourceKeyFull}`, // ⬅️ DO NOT encodeURIComponent
+        Key: destinationKey,
+      })
+    );
+
+    console.log("S3 copy completed");
+
+    // ------------------------------------------------------------
+    // 2. WRITE / UPDATE DYNAMODB (SOURCE OF TRUTH)
+    // ------------------------------------------------------------
+    const now = new Date().toISOString();
+
+    const existing = await ddb.send(
+      new GetCommand({
+        TableName: TABLE_NAME,
+        Key: { id: contractId },
+      })
+    );
+
+    let resultItem;
+
+    if (!existing.Item) {
+      resultItem = {
+        id: contractId,
+        contractType,
+        contractNumber,
+        pdfKey: destinationKey,
+        pdfType,
+        createdAt: now,
+      };
+
+      await ddb.send(
+        new PutCommand({
+          TableName: TABLE_NAME,
+          Item: resultItem,
+        })
+      );
+
+      console.log("DynamoDB item created");
+    } else {
+      const updated = await ddb.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: { id: contractId },
+          UpdateExpression:
+            "SET pdfKey = :k, pdfType = :t, updatedAt = :u",
+          ExpressionAttributeValues: {
+            ":k": destinationKey,
+            ":t": pdfType,
+            ":u": now,
+          },
+          ReturnValues: "ALL_NEW",
+        })
+      );
+
+      resultItem = updated.Attributes;
+      console.log("DynamoDB item updated");
+    }
+
+    // ------------------------------------------------------------
+    // 3. CLEANUP SOURCE OBJECT (BEST‑EFFORT, NEVER FATAL)
+    // ------------------------------------------------------------
+    try {
+      await s3.send(
+        new DeleteObjectCommand({
+          Bucket: BUCKET,
+          Key: sourceKeyFull,
+        })
+      );
+      console.log("Source object deleted");
+    } catch (err) {
+      if (err.name !== "NoSuchKey") {
+        console.warn("Non‑fatal S3 cleanup error:", err);
+      } else {
+        console.log("Source object already removed (safe to ignore)");
       }
-    }).promise();
+    }
 
+    // ------------------------------------------------------------
+    // ✅ SUCCESS
+    // ------------------------------------------------------------
     return {
       statusCode: 200,
-      body: `Saved ${field}`
+      headers,
+      body: JSON.stringify(resultItem),
+    };
+  } catch (err) {
+    console.error("UNHANDLED ERROR:", err);
+
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({
+        error: "Internal Server Error",
+        message: err.message,
+      }),
     };
   }
-
-  return {
-    statusCode: 400,
-    body: "Invalid pdfType"
-  };
 };
