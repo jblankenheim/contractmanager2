@@ -8,5 +8,6 @@
     "CREATE_AND_UPDATE",
     "READ",
     "DELETE"
-  ]
+  ],
+  "triggerFunction": "S3Trigger6c4edd56"
 }

@@ -69,6 +69,11 @@
     }
   },
   "function": {
+    "S3Trigger6c4edd56": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
     "submitEditedContractLambda": {
       "build": true,
       "dependsOn": [
@@ -101,6 +106,22 @@
     }
   },
   "parameters": {
+    "AMPLIFY_function_S3Trigger6c4edd56_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "S3Trigger6c4edd56"
+        }
+      ]
+    },
+    "AMPLIFY_function_S3Trigger6c4edd56_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "S3Trigger6c4edd56"
+        }
+      ]
+    },
     "AMPLIFY_function_submitEditedContractLambda_deploymentBucketName": {
       "usedBy": [
         {
@@ -120,7 +141,17 @@
   },
   "storage": {
     "s3contractmanager2storage87f59124": {
-      "dependsOn": [],
+      "dependsOn": [
+        {
+          "attributes": [
+            "Name",
+            "Arn",
+            "LambdaExecutionRole"
+          ],
+          "category": "function",
+          "resourceName": "S3Trigger6c4edd56"
+        }
+      ],
       "providerPlugin": "awscloudformation",
       "service": "S3"
     }
