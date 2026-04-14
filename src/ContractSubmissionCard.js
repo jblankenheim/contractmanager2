@@ -18,45 +18,49 @@ export default function ContractSubmissionCard({ onCancel }) {
   const [submittingIndex, setSubmittingIndex] = useState(null);
 
   // upload files → create review objects
-  const handleUpload = async () => {
-    if (!files.length) return;
 
-    setLoading(true);
+const handleUpload = async () => {
+  if (!files.length) return;
 
-    try {
-      const uploaded = await Promise.all(
-        files.map(async (file) => {
-          const key = `uploads/review/${Date.now()}-${file.name}`;
+  setLoading(true);
 
-          
-const result = await uploadData({
-  path: key,
-  data: file
-}).result;
+  try {
+    const uploaded = await Promise.all(
+      files.map(async (file) => {
+        const logicalKey = `uploads/review/${Date.now()}-${file.name}`;
 
-return {
-  contractNumber: "",
-  contractType: "MINIMUM_PRICE",
-  pdfType: "contract",
+        const { result } = uploadData({
+          path: logicalKey,
+          data: file
+        });
 
-  // ✅ Use the REAL S3 key returned by Amplify
-  pictureKey: result.path,   // <-- THIS LINE FIXES EVERYTHING
+        const uploadResult = await result;
 
-  signedUrl: URL.createObjectURL(file)
+        console.log("REAL S3 KEY:", uploadResult.key); // ← keep this temporarily
+
+        return {
+          contractNumber: "",
+          contractType: "MINIMUM_PRICE",
+          pdfType: "contract",
+
+          // ✅ THIS IS THE ONLY CORRECT KEY
+          pictureKey: uploadResult.key,
+
+          signedUrl: URL.createObjectURL(file)
+        };
+      })
+    );
+
+    setContracts(uploaded);
+    setFiles([]);
+  } catch (err) {
+    console.error(err);
+    alert("Upload failed");
+  } finally {
+    setLoading(false);
+  }
 };
 
-        })
-      );
-
-      setContracts(uploaded);
-      setFiles([]);
-    } catch (err) {
-      console.error(err);
-      alert("Upload failed");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEdit = (index, field, value) => {
     setContracts((prev) => {
