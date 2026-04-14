@@ -70,12 +70,16 @@ return {
     setSubmittingIndex(index);
 
     try {
-      const payload = {
-        pictureKey: contract.pictureKey,
-        contractNumber: contract.contractNumber,
-        contractType: contract.contractType,
-        pdfType: contract.pdfType
-      };
+      
+
+const payload = {
+sourceKey: contract.pictureKey,
+  contractNumber: contract.contractNumber,
+  contractType: contract.contractType,
+  pdfType: contract.pdfType
+};
+
+
 
       await post({
         apiName: "contractsAPI",
