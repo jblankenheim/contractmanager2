@@ -19,6 +19,7 @@ export default function ContractSubmissionCard({ onCancel }) {
 
   // upload files → create review objects
 
+
 const handleUpload = async () => {
   if (!files.length) return;
 
@@ -32,26 +33,24 @@ const handleUpload = async () => {
         const uploadTask = uploadData({
           path: logicalPath,
           data: file,
+          options: {
+            accessLevel: "public", // ✅ THIS IS THE KEY CHANGE
+            contentType: file.type
+          }
         });
-
-        console.log("AMPLIFY UPLOAD TASK:", uploadTask);
 
         const uploadResult = await uploadTask.result;
 
         console.log("AMPLIFY UPLOAD RESULT:", uploadResult);
 
-        const realPath =
-          uploadResult?.path ??
-          uploadResult?.key ??
-          uploadResult?.location;
-
-        console.log("RESOLVED REAL PATH:", realPath);
-
         return {
           contractNumber: "",
           contractType: "MINIMUM_PRICE",
           pdfType: "contract",
-          pictureKey: realPath,
+
+          // ✅ This is now the REAL S3 key
+          pictureKey: uploadResult.path,
+
           signedUrl: URL.createObjectURL(file),
         };
       })
@@ -66,6 +65,7 @@ const handleUpload = async () => {
     setLoading(false);
   }
 };
+
   const handleEdit = (index, field, value) => {
     setContracts((prev) => {
       const copy = [...prev];
