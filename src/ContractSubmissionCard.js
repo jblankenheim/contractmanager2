@@ -28,18 +28,23 @@ export default function ContractSubmissionCard({ onCancel }) {
         files.map(async (file) => {
           const key = `uploads/review/${Date.now()}-${file.name}`;
 
-          await uploadData({
-            path: key,
-            data: file
-          }).result;
+          
+const result = await uploadData({
+  path: key,
+  data: file
+}).result;
 
-          return {
-            contractNumber: "",
-            contractType: "MINIMUM_PRICE",
-            pdfType: "contract",
-            pictureKey: key,
-            signedUrl: URL.createObjectURL(file)
-          };
+return {
+  contractNumber: "",
+  contractType: "MINIMUM_PRICE",
+  pdfType: "contract",
+
+  // ✅ Use the REAL S3 key returned by Amplify
+  pictureKey: result.path,   // <-- THIS LINE FIXES EVERYTHING
+
+  signedUrl: URL.createObjectURL(file)
+};
+
         })
       );
 
