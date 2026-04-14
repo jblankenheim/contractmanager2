@@ -30,50 +30,49 @@ export default function HomePage({ user, signOut }) {
   /* =============================
      Fetch Contracts + Signed URLs
   ============================= */
-  async function fetchContracts() {
-    try {
-      const res = await client.graphql({
-        query: listContracts,
-        variables: { limit: 1000 },
-      });
 
-      const items = res.data.listContracts.items || [];
+async function fetchContracts() {
+  try {
+    const res = await client.graphql({
+      query: listContracts,
+      variables: { limit: 1000 },
+    });
 
-      const withMedia = await Promise.all(
-        items.map(async (c) => {
-          
-const keys = [
-  c.pictureKey,
-  c.addendumKey1,
-  c.addendumKey2,
-  c.duplicateKey,
-].filter(Boolean);
+    const items = res.data.listContracts.items ?? [];
 
+    const withMedia = await Promise.all(
+      items.map(async (c) => {
+        const keys = [
+          c.pictureKey,
+          c.addendumKey1,
+          c.addendumKey2,
+          c.duplicateKey,
+        ].filter(Boolean);
 
-          if (!keys.length) return { ...c, media: [] };
+        if (!keys.length) return { ...c, media: [] };
 
-          const media = await Promise.all(
-            keys.map(async (key) => {
-              
-const { url } = await getUrl({ key });
-const urlString = url.toString();
-const type = urlString.toLowerCase().includes(".pdf") ? "pdf" : "image";
+        const media = await Promise.all(
+          keys.map(async (key) => {
+            const { url } = await getUrl({ key });
+            const urlString = url.toString();
+            const type = urlString.toLowerCase().endsWith(".pdf")
+              ? "pdf"
+              : "image";
+            return { url: urlString, type };
+          })
+        );
 
-return { url: urlString, type }
+        return { ...c, media };
+      })
+    );
 
-            })
-          );
-
-          return { ...c, media };
-        })
-      );
-
-      setContracts(withMedia);
-      setFiltered(withMedia);
-    } catch (err) {
-      console.error("Failed to fetch contracts:", err);
-    }
+    setContracts(withMedia);
+    setFiltered(withMedia);
+  } catch (err) {
+    console.error("Failed to fetch contracts:", err);
   }
+}
+
 
   /* =============================
      Refresh on Submit OR Cancel
