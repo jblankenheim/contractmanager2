@@ -31,7 +31,7 @@ const handleUpload = async () => {
       files.map(async (file) => {
         // ✅ generate a truly temporary, immutable key
         const tempId = crypto.randomUUID();
-        const s3Path = `uploads/review/${tempId}.pdf`;
+        const s3Path = `public/uploads/review/${tempId}.pdf`;
 
         const uploadTask = uploadData({
           path: s3Path,
