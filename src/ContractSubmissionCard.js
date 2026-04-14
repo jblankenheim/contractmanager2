@@ -72,12 +72,14 @@ return {
     try {
       
 
+
 const payload = {
-sourceKey: contract.pictureKey,
+  sourceKey: contract.pictureKey,  
   contractNumber: contract.contractNumber,
   contractType: contract.contractType,
   pdfType: contract.pdfType
 };
+
 
 
 
