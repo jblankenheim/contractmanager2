@@ -28,13 +28,14 @@ const handleUpload = async () => {
   try {
     const uploaded = await Promise.all(
       files.map(async (file) => {
-        const logicalPath = `uploads/review/${Date.now()}-${file.name}`;
+        // ✅ EXPLICIT public prefix
+        const s3Path = `public/uploads/review/${Date.now()}-${file.name}`;
 
         const uploadTask = uploadData({
-          path: logicalPath,
+          path: s3Path,
           data: file,
           options: {
-            accessLevel: "public", // ✅ THIS IS THE KEY CHANGE
+            accessLevel: "public", // permissions
             contentType: file.type
           }
         });
@@ -48,7 +49,7 @@ const handleUpload = async () => {
           contractType: "MINIMUM_PRICE",
           pdfType: "contract",
 
-          // ✅ This is now the REAL S3 key
+          // ✅ THIS NOW MATCHES ACTUAL S3 KEY
           pictureKey: uploadResult.path,
 
           signedUrl: URL.createObjectURL(file),
