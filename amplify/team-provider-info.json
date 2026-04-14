@@ -9,11 +9,26 @@
       "UnauthRoleName": "amplify-contractmanager2-dev-42699-unauthRole",
       "StackName": "amplify-contractmanager2-dev-42699",
       "StackId": "arn:aws:cloudformation:us-east-2:311064037995:stack/amplify-contractmanager2-dev-42699/58bc0e00-367c-11f1-8227-0a36474641c1",
-      "AmplifyAppId": "d3fwqc96hd9s7m"
+      "AmplifyAppId": "d3fwqc96hd9s7m",
+      "APIGatewayAuthURL": "https://s3.amazonaws.com/amplify-contractmanager2-dev-42699-deployment/amplify-cfn-templates/api/APIGatewayAuthStack.json"
     },
     "categories": {
       "api": {
+        "contractmanager2": {},
+        "contractsAPI": {}
+      },
+      "auth": {
         "contractmanager2": {}
+      },
+      "storage": {
+        "s3contractmanager2storage87f59124": {}
+      },
+      "function": {
+        "submitEditedContract": {},
+        "submitEditedContractLambda": {
+          "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
+          "s3Key": "amplify-builds/submitEditedContractLambda-306f6e77373677384356-build.zip"
+        }
       }
     }
   }

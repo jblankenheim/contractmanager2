@@ -1,0 +1,12 @@
+{
+  "resourceName": "s3contractmanager2storage87f59124",
+  "bucketName": "contractmanager2-storage-87f59124",
+  "policyUUID": "8903d587",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ]
+}

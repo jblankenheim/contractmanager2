@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "paths": {
+    "/submitEditedContract": {
+      "name": "/submitEditedContract",
+      "lambdaFunction": "submitEditedContractLambda",
+      "permissions": {
+        "setting": "private",
+        "auth": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      }
+    }
+  }
+}
