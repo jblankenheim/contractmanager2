@@ -4,6 +4,8 @@ import { getUrl } from "aws-amplify/storage";
 import { listContracts } from "./graphql/queries";
 import ContractSubmissionCard from "./ContractSubmissionCard";
 import logo from "./assets/CFE_Logo.png";
+import BulkUploadPage from "./Bulkuploadpage";
+
 
 const client = generateClient();
 
@@ -161,6 +163,8 @@ export default function HomePage({ user, signOut }) {
           </button>
         ))}
       </div>
+     {/* contracts bulk upload page */}
+{activeView === "uploadData" && <BulkUploadPage />}
 
       {/* CONTRACTS VIEW */}
       {activeView === "contracts" && (

@@ -10,6 +10,8 @@ export const getTransactionDate = /* GraphQL */ `
       remainingBushels
       remainingDollars
       contractID
+      createdAt
+      updatedAt
       __typename
     }
   }
@@ -32,6 +34,8 @@ export const listTransactionDates = /* GraphQL */ `
         remainingBushels
         remainingDollars
         contractID
+        createdAt
+        updatedAt
         __typename
       }
       nextToken
@@ -61,6 +65,8 @@ export const transactionDatesByContractID = /* GraphQL */ `
         remainingBushels
         remainingDollars
         contractID
+        createdAt
+        updatedAt
         __typename
       }
       nextToken
@@ -92,6 +98,8 @@ export const getContract = /* GraphQL */ `
         nextToken
         __typename
       }
+      createdAt
+      updatedAt
       __typename
     }
   }
@@ -121,6 +129,8 @@ export const listContracts = /* GraphQL */ `
         addendumKey1
         addendumKey2
         duplicateKey
+        createdAt
+        updatedAt
         __typename
       }
       nextToken
@@ -161,6 +171,8 @@ export const contractsByType = /* GraphQL */ `
         addendumKey1
         addendumKey2
         duplicateKey
+        createdAt
+        updatedAt
         __typename
       }
       nextToken
@@ -201,6 +213,8 @@ export const contractsByNumber = /* GraphQL */ `
         addendumKey1
         addendumKey2
         duplicateKey
+        createdAt
+        updatedAt
         __typename
       }
       nextToken
@@ -241,6 +255,8 @@ export const contractsByName = /* GraphQL */ `
         addendumKey1
         addendumKey2
         duplicateKey
+        createdAt
+        updatedAt
         __typename
       }
       nextToken

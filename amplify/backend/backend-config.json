@@ -74,6 +74,44 @@
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
     },
+    "contractRawData": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "contractmanager2"
+        },
+        {
+          "attributes": [
+            "ApiName",
+            "ApiId"
+          ],
+          "category": "api",
+          "resourceName": "contractsAPI"
+        },
+        {
+          "attributes": [
+            "UserPoolId"
+          ],
+          "category": "auth",
+          "resourceName": "contractmanager2"
+        },
+        {
+          "attributes": [
+            "BucketName"
+          ],
+          "category": "storage",
+          "resourceName": "s3contractmanager2storage87f59124"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
     "submitEditedContractLambda": {
       "build": true,
       "dependsOn": [
@@ -119,6 +157,22 @@
         {
           "category": "function",
           "resourceName": "S3Trigger6c4edd56"
+        }
+      ]
+    },
+    "AMPLIFY_function_contractRawData_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "contractRawData"
+        }
+      ]
+    },
+    "AMPLIFY_function_contractRawData_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "contractRawData"
         }
       ]
     },
