@@ -42,7 +42,11 @@
   height: 100vh;             /* full viewport height */
   display: flex;
   justify-content: center;    /* horizontal center */
-  align-items: center;        /* vertical center */
+  align-items: top;        /* vertical center */
+}
+@media print {
+  body > * { display: none; }
+  .print-target { display: block !important; }
 }
 :root {
   /* Backgrounds */

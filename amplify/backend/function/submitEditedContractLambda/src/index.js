@@ -1,3 +1,4 @@
+
 const {
   S3Client,
   CopyObjectCommand,
@@ -15,9 +16,15 @@ const {
 const s3 = new S3Client({});
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
-const TABLE_NAME = process.env.TABLE_NAME;
-const BUCKET = process.env.CONTRACT_BUCKET;
+// ---- ENV VARS ----
+const TABLE_NAME = process.env.TABLE_NAME?.trim();
+const BUCKET = process.env.CONTRACT_BUCKET?.trim();
 
+if (!TABLE_NAME || !BUCKET) {
+  throw new Error("Missing TABLE_NAME or CONTRACT_BUCKET environment variables");
+}
+
+// ---- CORS ----
 const headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "*",
@@ -35,7 +42,7 @@ exports.handler = async (event) => {
       pdfType = "contract",
     } = body;
 
-    if (!sourceKey || !contractType || !contractNumber) {
+    if (!sourceKey || !contractType || contractNumber === undefined) {
       return {
         statusCode: 400,
         headers,
@@ -43,13 +50,24 @@ exports.handler = async (event) => {
       };
     }
 
-    const contractId = `${contractType}_${contractNumber}`;
+    // ---- ✅ NORMALIZE CONTRACT NUMBER AS NUMBER ----
+    const contractNumberStr = String(contractNumber).trim();
 
-    // ✅ sourceKey must already be the real S3 key (including public/)
+    if (!contractNumberStr) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: "contractNumber is required",
+        }),
+      };
+    }
+
+    const contractId = `${contractType}_${contractNumberStr}`;
     const sourceKeyFull = sourceKey;
 
-    // ✅ deterministic destination
-    const destinationKey = `public/contracts/${contractType}/${contractNumber}.pdf`;
+    const destinationKey =
+      `public/contracts/${contractType}/${contractNumberStr}.pdf`;
 
     console.log("Processing contract submission:", {
       contractId,
@@ -57,22 +75,22 @@ exports.handler = async (event) => {
       destinationKey,
     });
 
-    // ------------------------------------------------------------
-    // 1. COPY OBJECT (CRITICAL)
-    // ------------------------------------------------------------
+    // --------------------------------------------------
+    // 1️⃣ COPY CONTRACT (CRITICAL STEP)
+    // --------------------------------------------------
     await s3.send(
       new CopyObjectCommand({
         Bucket: BUCKET,
-        CopySource: `${BUCKET}/${sourceKeyFull}`, // ⬅️ DO NOT encodeURIComponent
+        CopySource: `${BUCKET}/${sourceKeyFull}`, // do NOT encode
         Key: destinationKey,
       })
     );
 
     console.log("S3 copy completed");
 
-    // ------------------------------------------------------------
-    // 2. WRITE / UPDATE DYNAMODB (SOURCE OF TRUTH)
-    // ------------------------------------------------------------
+    // --------------------------------------------------
+    // 2️⃣ WRITE / UPDATE DYNAMODB (SOURCE OF TRUTH)
+    // --------------------------------------------------
     const now = new Date().toISOString();
 
     const existing = await ddb.send(
@@ -85,12 +103,14 @@ exports.handler = async (event) => {
     let resultItem;
 
     if (!existing.Item) {
+      // ✅ New contract — store pdfKey as pictureKey (string)
       resultItem = {
         id: contractId,
         contractType,
-        contractNumber,
-        pdfKey: destinationKey,
+        contractNumber: contractNumberStr,
+        pictureKey: destinationKey,   // ← string, not array
         pdfType,
+        signed: true,
         createdAt: now,
       };
 
@@ -102,29 +122,59 @@ exports.handler = async (event) => {
       );
 
       console.log("DynamoDB item created");
+
     } else {
+      // ✅ Duplicate — move to duplicates folder, append to duplicateKey
+      const duplicatePath = `public/duplicates/${contractId}/${Date.now()}.pdf`;
+
+      await s3.send(
+        new CopyObjectCommand({
+          Bucket: BUCKET,
+          CopySource: `${BUCKET}/${destinationKey}`,
+          Key: duplicatePath,
+        })
+      );
+
+      await s3.send(
+        new DeleteObjectCommand({
+          Bucket: BUCKET,
+          Key: destinationKey,
+        })
+      );
+
+      console.log("Duplicate moved to:", duplicatePath);
+
       const updated = await ddb.send(
         new UpdateCommand({
           TableName: TABLE_NAME,
           Key: { id: contractId },
-          UpdateExpression:
-            "SET pdfKey = :k, pdfType = :t, updatedAt = :u",
+          UpdateExpression: `
+        SET
+          pdfType = :t,
+          contractNumber = :n,
+          signed = :s,
+          updatedAt = :u,
+          duplicateKey = list_append(if_not_exists(duplicateKey, :emptyList), :newDuplicate)
+      `,
           ExpressionAttributeValues: {
-            ":k": destinationKey,
             ":t": pdfType,
+            ":n": contractNumberStr,
+            ":s": true,
             ":u": now,
+            ":newDuplicate": [duplicatePath],
+            ":emptyList": [],
           },
           ReturnValues: "ALL_NEW",
         })
       );
 
       resultItem = updated.Attributes;
-      console.log("DynamoDB item updated");
+      console.log("DynamoDB item updated with duplicate");
     }
 
-    // ------------------------------------------------------------
-    // 3. CLEANUP SOURCE OBJECT (BEST‑EFFORT, NEVER FATAL)
-    // ------------------------------------------------------------
+    // --------------------------------------------------
+    // 3️⃣ DELETE SOURCE FILE (BEST‑EFFORT CLEANUP)
+    // --------------------------------------------------
     try {
       await s3.send(
         new DeleteObjectCommand({
@@ -137,13 +187,13 @@ exports.handler = async (event) => {
       if (err.name !== "NoSuchKey") {
         console.warn("Non‑fatal S3 cleanup error:", err);
       } else {
-        console.log("Source object already removed (safe to ignore)");
+        console.log("Source object already deleted (safe)");
       }
     }
 
-    // ------------------------------------------------------------
+    // --------------------------------------------------
     // ✅ SUCCESS
-    // ------------------------------------------------------------
+    // --------------------------------------------------
     return {
       statusCode: 200,
       headers,
@@ -161,4 +211,4 @@ exports.handler = async (event) => {
       }),
     };
   }
-};
+}

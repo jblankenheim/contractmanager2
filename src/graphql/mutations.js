@@ -13,8 +13,6 @@ export const createTransactionDate = /* GraphQL */ `
       remainingBushels
       remainingDollars
       contractID
-      createdAt
-      updatedAt
       __typename
     }
   }
@@ -31,8 +29,6 @@ export const updateTransactionDate = /* GraphQL */ `
       remainingBushels
       remainingDollars
       contractID
-      createdAt
-      updatedAt
       __typename
     }
   }
@@ -49,8 +45,6 @@ export const deleteTransactionDate = /* GraphQL */ `
       remainingBushels
       remainingDollars
       contractID
-      createdAt
-      updatedAt
       __typename
     }
   }
@@ -82,8 +76,6 @@ export const createContract = /* GraphQL */ `
         nextToken
         __typename
       }
-      createdAt
-      updatedAt
       __typename
     }
   }
@@ -115,8 +107,6 @@ export const updateContract = /* GraphQL */ `
         nextToken
         __typename
       }
-      createdAt
-      updatedAt
       __typename
     }
   }
@@ -148,8 +138,6 @@ export const deleteContract = /* GraphQL */ `
         nextToken
         __typename
       }
-      createdAt
-      updatedAt
       __typename
     }
   }

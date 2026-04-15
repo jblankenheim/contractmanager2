@@ -76,8 +76,6 @@ export const onCreateContract = /* GraphQL */ `
         nextToken
         __typename
       }
-      createdAt
-      updatedAt
       __typename
     }
   }
@@ -106,8 +104,6 @@ export const onUpdateContract = /* GraphQL */ `
         nextToken
         __typename
       }
-      createdAt
-      updatedAt
       __typename
     }
   }
@@ -136,8 +132,6 @@ export const onDeleteContract = /* GraphQL */ `
         nextToken
         __typename
       }
-      createdAt
-      updatedAt
       __typename
     }
   }

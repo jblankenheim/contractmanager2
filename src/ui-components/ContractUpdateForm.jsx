@@ -12,6 +12,7 @@ import {
   Grid,
   SelectField,
   SwitchField,
+  TextAreaField,
   TextField,
 } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
@@ -111,7 +112,12 @@ export default function ContractUpdateForm(props) {
     setPictureKey(cleanValues.pictureKey);
     setAddendumKey1(cleanValues.addendumKey1);
     setAddendumKey2(cleanValues.addendumKey2);
-    setDuplicateKey(cleanValues.duplicateKey);
+    setDuplicateKey(
+      typeof cleanValues.duplicateKey === "string" ||
+        cleanValues.duplicateKey === null
+        ? cleanValues.duplicateKey
+        : JSON.stringify(cleanValues.duplicateKey)
+    );
     setErrors({});
   };
   const [contractRecord, setContractRecord] = React.useState(contractModelProp);
@@ -146,7 +152,7 @@ export default function ContractUpdateForm(props) {
     pictureKey: [],
     addendumKey1: [],
     addendumKey2: [],
-    duplicateKey: [],
+    duplicateKey: [{ type: "JSON" }],
   };
   const runValidationTasks = async (
     fieldName,
@@ -315,13 +321,9 @@ export default function ContractUpdateForm(props) {
         label="Contract number"
         isRequired={false}
         isReadOnly={false}
-        type="number"
-        step="any"
         value={contractNumber}
         onChange={(e) => {
-          let value = isNaN(parseInt(e.target.value))
-            ? e.target.value
-            : parseInt(e.target.value);
+          let { value } = e.target;
           if (onChange) {
             const modelFields = {
               contractType,
@@ -876,7 +878,7 @@ export default function ContractUpdateForm(props) {
         hasError={errors.addendumKey2?.hasError}
         {...getOverrideProps(overrides, "addendumKey2")}
       ></TextField>
-      <TextField
+      <TextAreaField
         label="Duplicate key"
         isRequired={false}
         isReadOnly={false}
@@ -914,7 +916,7 @@ export default function ContractUpdateForm(props) {
         errorMessage={errors.duplicateKey?.errorMessage}
         hasError={errors.duplicateKey?.hasError}
         {...getOverrideProps(overrides, "duplicateKey")}
-      ></TextField>
+      ></TextAreaField>
       <Flex
         justifyContent="space-between"
         {...getOverrideProps(overrides, "CTAFlex")}

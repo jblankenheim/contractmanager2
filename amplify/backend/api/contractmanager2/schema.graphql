@@ -21,9 +21,8 @@ type Contract @model @auth(rules: [{allow: public}]) {
 
   contractType: ContractTypes!
     @index(name: "byContractType", queryField: "contractsByType")
-
-  contractNumber: Int
-    @index(name: "byContractNumber", queryField: "contractsByNumber")
+  contractNumber: String
+  @index(name: "byContractNumber", queryField: "contractsByNumber")
   contractName: String
     @index(name: "byContractName", queryField: "contractsByName")
   contractLocation: String
@@ -38,6 +37,6 @@ type Contract @model @auth(rules: [{allow: public}]) {
   pictureKey: String
   addendumKey1: String
   addendumKey2: String
-  duplicateKey: String
+  duplicateKey: AWSJSON
   TransactionDates: [TransactionDate] @hasMany(indexName: "byContract", fields: ["id"])
 }

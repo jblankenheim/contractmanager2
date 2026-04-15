@@ -69,13 +69,18 @@ const handleUpload = async () => {
   }
 };
 
-  const handleEdit = (index, field, value) => {
-    setContracts((prev) => {
-      const copy = [...prev];
-      copy[index][field] = value;
-      return copy;
-    });
-  };
+ const handleEdit = (index, field, value) => {
+  setContracts((prev) => {
+    const copy = [...prev];
+
+    copy[index][field] =
+      field === "contractNumber"
+        ? String(value)
+        : value;
+
+    return copy;
+  });
+}
 
 const submitEditedContract = async (contract, index) => {
   setSubmittingIndex(index);
@@ -83,11 +88,11 @@ const submitEditedContract = async (contract, index) => {
   try {
     const payload = {
       sourceKey: contract.pictureKey,
-      contractNumber: contract.contractNumber,
+       contractNumber: String(contract.contractNumber ?? "").trim(),
       contractType: contract.contractType,
       pdfType: contract.pdfType
     };
-
+    console.log("TYPE:", typeof payload.contractNumber);
     const operation = await post({
       apiName: "contractsAPI",
       path: "/submitEditedContract",
@@ -157,7 +162,7 @@ const submitEditedContract = async (contract, index) => {
               <strong>Contract #:</strong>
               <input
                 style={{ marginLeft: 5 }}
-                value={c.contractNumber}
+                value={String(c.contractNumber ?? "")}
                 onChange={(e) =>
                   handleEdit(i, "contractNumber", e.target.value)
                 }

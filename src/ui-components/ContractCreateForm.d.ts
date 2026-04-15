@@ -5,7 +5,7 @@
  **************************************************************************/
 
 import * as React from "react";
-import { GridProps, SelectFieldProps, SwitchFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { GridProps, SelectFieldProps, SwitchFieldProps, TextAreaFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
 export declare type EscapeHatchProps = {
     [elementHierarchy: string]: Record<string, unknown>;
 } | null;
@@ -23,7 +23,7 @@ export declare type ValidationResponse = {
 export declare type ValidationFunction<T> = (value: T, validationResponse: ValidationResponse) => ValidationResponse | Promise<ValidationResponse>;
 export declare type ContractCreateFormInputValues = {
     contractType?: string;
-    contractNumber?: number;
+    contractNumber?: string;
     contractName?: string;
     contractLocation?: string;
     contractBushels?: string;
@@ -41,7 +41,7 @@ export declare type ContractCreateFormInputValues = {
 };
 export declare type ContractCreateFormValidationValues = {
     contractType?: ValidationFunction<string>;
-    contractNumber?: ValidationFunction<number>;
+    contractNumber?: ValidationFunction<string>;
     contractName?: ValidationFunction<string>;
     contractLocation?: ValidationFunction<string>;
     contractBushels?: ValidationFunction<string>;
@@ -75,7 +75,7 @@ export declare type ContractCreateFormOverridesProps = {
     pictureKey?: PrimitiveOverrideProps<TextFieldProps>;
     addendumKey1?: PrimitiveOverrideProps<TextFieldProps>;
     addendumKey2?: PrimitiveOverrideProps<TextFieldProps>;
-    duplicateKey?: PrimitiveOverrideProps<TextFieldProps>;
+    duplicateKey?: PrimitiveOverrideProps<TextAreaFieldProps>;
 } & EscapeHatchProps;
 export declare type ContractCreateFormProps = React.PropsWithChildren<{
     overrides?: ContractCreateFormOverridesProps | undefined | null;
