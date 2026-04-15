@@ -5,17 +5,18 @@ import { post } from "aws-amplify/api";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TABS = [
-  { key: "contracts",    label: "Contract Data" },
+  { key: "contracts", label: "Contract Data" },
   { key: "transactions", label: "Transaction Data" },
 ];
 
 const S3_PREFIX = {
-  contracts:    "public/bulk/contracts/",
+  contracts: "public/bulk/contracts/",
   transactions: "public/bulk/transactions/",
 };
 
 const API_NAME = "contractsAPI";
-const API_PATH = "/contractsRawData";
+const API_PATH_Contracts = "/rawContractsData";
+const API_PATH_Transactions = "/rawTransactionsData";
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -126,12 +127,12 @@ const styles = {
     fontWeight: 500,
     background:
       type === "success" ? "#1a3a2a" :
-      type === "error"   ? "#3a1a1a" :
-                           "#1a2a3a",
+        type === "error" ? "#3a1a1a" :
+          "#1a2a3a",
     color:
       type === "success" ? "#3fb950" :
-      type === "error"   ? "#f85149" :
-                           "#58a6ff",
+        type === "error" ? "#f85149" :
+          "#58a6ff",
   }),
   emptyRow: {
     textAlign: "center",
@@ -145,7 +146,7 @@ const styles = {
     borderRadius: 6,
     fontSize: 13,
     background: type === "success" ? "#1a3a2a" : "#3a1a1a",
-    color:      type === "success" ? "#3fb950"  : "#f85149",
+    color: type === "success" ? "#3fb950" : "#f85149",
     border: `1px solid ${type === "success" ? "#238636" : "#da3633"}`,
   }),
 };
@@ -182,14 +183,17 @@ export default function BulkUploadPage() {
 function BulkTab({ tabKey }) {
   const fileInputRef = useRef(null);
 
-  const [s3Files, setS3Files]           = useState([]);
-  const [selected, setSelected]         = useState(new Set());
-  const [uploading, setUploading]       = useState(false);
+  const [s3Files, setS3Files] = useState([]);
+  const [selected, setSelected] = useState(new Set());
+  const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState({});   // filename → "uploading"|"done"|"error"
-  const [submitting, setSubmitting]     = useState(false);
-  const [toast, setToast]               = useState(null); // { type, message }
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null); // { type, message }
   const [pendingFiles, setPendingFiles] = useState([]);
-
+  const API_PATHS = {
+    contracts: "/rawContractsData",
+    transactions: "/rawTransactionsData",
+  };
   useEffect(() => {
     loadS3Files();
   }, []);
@@ -257,13 +261,16 @@ function BulkTab({ tabKey }) {
 
   async function handleSubmit() {
     if (!selected.size || submitting) return;
+
     setSubmitting(true);
     setToast(null);
+
+    const path = API_PATHS[tabKey];
 
     try {
       const response = await post({
         apiName: API_NAME,
-        path: API_PATH,
+        path: path,
         options: {
           body: {
             tab: tabKey,
@@ -276,11 +283,15 @@ function BulkTab({ tabKey }) {
 
       setToast({
         type: "success",
-        message: body?.message ?? `Successfully submitted ${selected.size} file(s).`,
+        message:
+          body?.message ??
+          `Successfully submitted ${selected.size} file(s).`,
       });
+
       setSelected(new Set());
     } catch (err) {
       console.error("Submit failed:", err);
+
       setToast({
         type: "error",
         message: err?.message ?? "Submission failed. Please try again.",

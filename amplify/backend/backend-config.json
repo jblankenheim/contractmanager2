@@ -31,6 +31,22 @@
           ],
           "category": "function",
           "resourceName": "submitEditedContractLambda"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "rawContractData"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "rawTransactionsData"
         }
       ],
       "providerPlugin": "awscloudformation",
@@ -74,7 +90,7 @@
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
     },
-    "contractRawData": {
+    "rawContractData": {
       "build": true,
       "dependsOn": [
         {
@@ -88,17 +104,25 @@
         },
         {
           "attributes": [
-            "ApiName",
-            "ApiId"
+            "BucketName"
           ],
-          "category": "api",
-          "resourceName": "contractsAPI"
-        },
+          "category": "storage",
+          "resourceName": "s3contractmanager2storage87f59124"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "rawTransactionsData": {
+      "build": true,
+      "dependsOn": [
         {
           "attributes": [
-            "UserPoolId"
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
           ],
-          "category": "auth",
+          "category": "api",
           "resourceName": "contractmanager2"
         },
         {
@@ -160,19 +184,35 @@
         }
       ]
     },
-    "AMPLIFY_function_contractRawData_deploymentBucketName": {
+    "AMPLIFY_function_rawContractData_deploymentBucketName": {
       "usedBy": [
         {
           "category": "function",
-          "resourceName": "contractRawData"
+          "resourceName": "rawContractData"
         }
       ]
     },
-    "AMPLIFY_function_contractRawData_s3Key": {
+    "AMPLIFY_function_rawContractData_s3Key": {
       "usedBy": [
         {
           "category": "function",
-          "resourceName": "contractRawData"
+          "resourceName": "rawContractData"
+        }
+      ]
+    },
+    "AMPLIFY_function_rawTransactionsData_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "rawTransactionsData"
+        }
+      ]
+    },
+    "AMPLIFY_function_rawTransactionsData_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "rawTransactionsData"
         }
       ]
     },

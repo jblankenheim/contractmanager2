@@ -5,20 +5,6 @@
         "Query",
         "Mutation",
         "Subscription"
-      ],
-      "contractsAPI": [
-        "create",
-        "read",
-        "update",
-        "delete"
-      ]
-    },
-    "auth": {
-      "contractmanager2": [
-        "create",
-        "read",
-        "update",
-        "delete"
       ]
     },
     "storage": {

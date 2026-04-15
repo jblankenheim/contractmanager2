@@ -13,6 +13,32 @@
           "delete"
         ]
       }
+    },
+    "/rawContractData": {
+      "name": "/rawContractData",
+      "lambdaFunction": "rawContractData",
+      "permissions": {
+        "setting": "private",
+        "auth": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      }
+    },
+    "/rawTransactionsData": {
+      "name": "/rawTransactionsData",
+      "lambdaFunction": "rawTransactionsData",
+      "permissions": {
+        "setting": "private",
+        "auth": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      }
     }
   }
 }
