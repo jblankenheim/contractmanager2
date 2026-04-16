@@ -125,7 +125,7 @@ export default function HomePage({ user, signOut }) {
 
   const tabs = [
     { key: "contracts", label: "Contracts" },
-    { key: "reviewNew", label: "Review New" },
+    { key: "reviewUnassigned", label: "Duplicates/Unassigned" },
     { key: "reviewClose", label: "Review Close" },
     { key: "uploadData", label: "Upload Data" },
   ];
