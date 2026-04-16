@@ -36,6 +36,7 @@ export declare type ContractCreateFormInputValues = {
     markforReview?: boolean;
     locked?: boolean;
     pictureKey?: string;
+    transactionKey?: string;
     addendumKey1?: string;
     addendumKey2?: string;
     duplicateKey?: string;
@@ -57,6 +58,7 @@ export declare type ContractCreateFormValidationValues = {
     markforReview?: ValidationFunction<boolean>;
     locked?: ValidationFunction<boolean>;
     pictureKey?: ValidationFunction<string>;
+    transactionKey?: ValidationFunction<string>;
     addendumKey1?: ValidationFunction<string>;
     addendumKey2?: ValidationFunction<string>;
     duplicateKey?: ValidationFunction<string>;
@@ -80,6 +82,7 @@ export declare type ContractCreateFormOverridesProps = {
     markforReview?: PrimitiveOverrideProps<SwitchFieldProps>;
     locked?: PrimitiveOverrideProps<SwitchFieldProps>;
     pictureKey?: PrimitiveOverrideProps<TextFieldProps>;
+    transactionKey?: PrimitiveOverrideProps<TextFieldProps>;
     addendumKey1?: PrimitiveOverrideProps<TextFieldProps>;
     addendumKey2?: PrimitiveOverrideProps<TextFieldProps>;
     duplicateKey?: PrimitiveOverrideProps<TextAreaFieldProps>;

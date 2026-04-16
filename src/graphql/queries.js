@@ -19,6 +19,7 @@ export const getContract = /* GraphQL */ `
       markforReview
       locked
       pictureKey
+      transactionKey
       addendumKey1
       addendumKey2
       duplicateKey
@@ -53,6 +54,7 @@ export const listContracts = /* GraphQL */ `
         markforReview
         locked
         pictureKey
+        transactionKey
         addendumKey1
         addendumKey2
         duplicateKey
@@ -98,6 +100,7 @@ export const contractsByType = /* GraphQL */ `
         markforReview
         locked
         pictureKey
+        transactionKey
         addendumKey1
         addendumKey2
         duplicateKey
@@ -143,6 +146,7 @@ export const contractsByNumber = /* GraphQL */ `
         markforReview
         locked
         pictureKey
+        transactionKey
         addendumKey1
         addendumKey2
         duplicateKey
@@ -188,6 +192,7 @@ export const contractsByName = /* GraphQL */ `
         markforReview
         locked
         pictureKey
+        transactionKey
         addendumKey1
         addendumKey2
         duplicateKey

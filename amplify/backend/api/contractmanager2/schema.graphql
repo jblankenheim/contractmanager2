@@ -18,6 +18,7 @@ type Contract @model @auth(rules: [{allow: public}]) {
   markforReview: Boolean
   locked: Boolean  
   pictureKey: String
+  transactionKey: String
   addendumKey1: String
   addendumKey2: String
   duplicateKey: AWSJSON

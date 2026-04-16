@@ -45,6 +45,7 @@ export default function ContractCreateForm(props) {
     markforReview: false,
     locked: false,
     pictureKey: "",
+    transactionKey: "",
     addendumKey1: "",
     addendumKey2: "",
     duplicateKey: "",
@@ -79,6 +80,9 @@ export default function ContractCreateForm(props) {
   );
   const [locked, setLocked] = React.useState(initialValues.locked);
   const [pictureKey, setPictureKey] = React.useState(initialValues.pictureKey);
+  const [transactionKey, setTransactionKey] = React.useState(
+    initialValues.transactionKey
+  );
   const [addendumKey1, setAddendumKey1] = React.useState(
     initialValues.addendumKey1
   );
@@ -108,6 +112,7 @@ export default function ContractCreateForm(props) {
     setMarkforReview(initialValues.markforReview);
     setLocked(initialValues.locked);
     setPictureKey(initialValues.pictureKey);
+    setTransactionKey(initialValues.transactionKey);
     setAddendumKey1(initialValues.addendumKey1);
     setAddendumKey2(initialValues.addendumKey2);
     setDuplicateKey(initialValues.duplicateKey);
@@ -130,6 +135,7 @@ export default function ContractCreateForm(props) {
     markforReview: [],
     locked: [],
     pictureKey: [],
+    transactionKey: [],
     addendumKey1: [],
     addendumKey2: [],
     duplicateKey: [{ type: "JSON" }],
@@ -176,6 +182,7 @@ export default function ContractCreateForm(props) {
           markforReview,
           locked,
           pictureKey,
+          transactionKey,
           addendumKey1,
           addendumKey2,
           duplicateKey,
@@ -257,6 +264,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -340,6 +348,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -382,6 +391,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -424,6 +434,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -470,6 +481,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -513,6 +525,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -559,6 +572,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -607,6 +621,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -650,6 +665,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -692,6 +708,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -734,6 +751,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -778,6 +796,7 @@ export default function ContractCreateForm(props) {
               markforReview: value,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -820,6 +839,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked: value,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -862,6 +882,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey: value,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -880,6 +901,49 @@ export default function ContractCreateForm(props) {
         errorMessage={errors.pictureKey?.errorMessage}
         hasError={errors.pictureKey?.hasError}
         {...getOverrideProps(overrides, "pictureKey")}
+      ></TextField>
+      <TextField
+        label="Transaction key"
+        isRequired={false}
+        isReadOnly={false}
+        value={transactionKey}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              contractType,
+              contractNumber,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
+              closedDate,
+              closedBy,
+              settlementReference,
+              markforReview,
+              locked,
+              pictureKey,
+              transactionKey: value,
+              addendumKey1,
+              addendumKey2,
+              duplicateKey,
+              notes,
+              TransactionDates,
+            };
+            const result = onChange(modelFields);
+            value = result?.transactionKey ?? value;
+          }
+          if (errors.transactionKey?.hasError) {
+            runValidationTasks("transactionKey", value);
+          }
+          setTransactionKey(value);
+        }}
+        onBlur={() => runValidationTasks("transactionKey", transactionKey)}
+        errorMessage={errors.transactionKey?.errorMessage}
+        hasError={errors.transactionKey?.hasError}
+        {...getOverrideProps(overrides, "transactionKey")}
       ></TextField>
       <TextField
         label="Addendum key1"
@@ -904,6 +968,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1: value,
               addendumKey2,
               duplicateKey,
@@ -946,6 +1011,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2: value,
               duplicateKey,
@@ -987,6 +1053,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey: value,
@@ -1029,6 +1096,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -1070,6 +1138,7 @@ export default function ContractCreateForm(props) {
               markforReview,
               locked,
               pictureKey,
+              transactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,

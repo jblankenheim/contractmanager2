@@ -22,6 +22,7 @@ export const createContract = /* GraphQL */ `
       markforReview
       locked
       pictureKey
+      transactionKey
       addendumKey1
       addendumKey2
       duplicateKey
@@ -54,6 +55,7 @@ export const updateContract = /* GraphQL */ `
       markforReview
       locked
       pictureKey
+      transactionKey
       addendumKey1
       addendumKey2
       duplicateKey
@@ -86,6 +88,7 @@ export const deleteContract = /* GraphQL */ `
       markforReview
       locked
       pictureKey
+      transactionKey
       addendumKey1
       addendumKey2
       duplicateKey

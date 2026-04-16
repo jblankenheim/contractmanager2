@@ -11,43 +11,39 @@ const dynamodb = DynamoDBDocumentClient.from(ddbClient);
 const TABLE_NAME = process.env.API_CONTRACTMANAGER2_CONTRACTTABLE_NAME;
 const BUCKET = process.env.STORAGE_S3CONTRACTMANAGER2STORAGE87F59124_BUCKETNAME;
 
+// Updated to include all fields you mentioned
 const ALLOWED_FIELDS = [
-  'contractType', 'contractNumber', 'name', 'location', 
-  'originalQuantity', 'remainingQuantity', 'netDollars'
+  'contractType', 'contractNumber', 'commodity', 'name', 
+  'location', 'contractDate', 'originalQuantity', 'remainingQuantity', 
+  'netDollars'
 ];
 
 let validationErrors = [];
 let closedContracts = new Set();
 
 exports.handler = async (event) => {
-  console.log('EVENT received');
   validationErrors = [];
   closedContracts = new Set();
 
   try {
     const body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
-    
-    // The frontend sends the path like "public/bulk/contracts/file.csv"
-    // S3 GetObject needs the key exactly as it exists in the bucket.
     let fileKey = body.file;
 
     if (!fileKey) return response(400, { message: 'No S3 file path provided' });
 
-    console.log(`Attempting to fetch from S3: Bucket: ${BUCKET}, Key: ${fileKey}`);
-
     const csvData = await loadS3File(fileKey);
     const rows = parseCsv(csvData);
     
-    console.log(`Parsed ${rows.length} rows from CSV.`);
+    if (rows.length === 0) {
+        return response(400, { message: "CSV file appears empty or formatted incorrectly." });
+    }
 
     for (const row of rows) {
       await upsertContract(row, fileKey);
     }
 
-    console.log('Processing complete.');
-
     return response(200, {
-      message: `Processed ${rows.length} rows.`,
+      message: `Successfully processed ${rows.length} rows.`,
       closedContracts: Array.from(closedContracts),
       errors: validationErrors.length > 0 ? validationErrors : undefined
     });
@@ -59,28 +55,33 @@ exports.handler = async (event) => {
 };
 
 async function loadS3File(key) {
-  try {
-    const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
-    const obj = await s3Client.send(command);
-    return await obj.Body.transformToString();
-  } catch (err) {
-    console.error(`S3 Error loading ${key}:`, err.message);
-    throw new Error(`Could not retrieve file from S3: ${err.message}`);
-  }
+  const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+  const obj = await s3Client.send(command);
+  let str = await obj.Body.transformToString();
+  
+  // Clean up "Wingdings"/BOM (Byte Order Mark) at the start of the file
+  return str.replace(/^\uFEFF/, '');
 }
 
 function parseCsv(data) {
+  // Handle different line endings and filter out empty lines
   const lines = data.split(/\r?\n/).filter(line => line.trim() !== "");
   if (lines.length < 2) return [];
 
-  const headers = lines.shift().split(',').map(h => h.trim());
-  console.log('Detected Headers:', headers);
+  // Get headers from the first row and trim whitespace/invisible chars
+  const headers = lines.shift().split(',').map(h => h.trim().replace(/['"]+/g, ''));
+  console.log('Dynamic Headers Mapping:', headers);
 
   return lines.map((line, index) => {
-    const values = line.split(',').map(v => v.trim());
+    // Simple split by comma. Note: If your data has commas inside quotes, we'll need a regex split.
+    const values = line.split(',').map(v => v.trim().replace(/['"]+/g, ''));
     const obj = { __rowNumber: index + 2 };
+
     headers.forEach((header, i) => {
-      if (values[i] !== undefined) obj[header] = values[i];
+      // Map every value to its corresponding header name
+      if (header && values[i] !== undefined) {
+        obj[header] = values[i];
+      }
     });
     return obj;
   });
@@ -90,30 +91,25 @@ async function upsertContract(row, fileKey) {
   const { contractType, contractNumber } = row;
 
   if (!contractType || !contractNumber) {
-    console.warn(`Row ${row.__rowNumber}: Missing ID info`, row);
     validationErrors.push({ row: row.__rowNumber, error: 'Missing contractType or contractNumber' });
     return;
   }
 
   const id = `${contractType}_${contractNumber}`;
   
-  // 1. Check existing
   const existing = await dynamodb.send(new GetCommand({
     TableName: TABLE_NAME,
     Key: { id }
   }));
 
   if (existing.Item?.closedDate || existing.Item?.closedBy) {
-    console.log(`Skipping ${id}: Contract is closed.`);
     closedContracts.add(id);
     return;
   }
 
   if (existing.Item) {
-    console.log(`Updating existing contract: ${id}`);
     await updateContract(id, row);
   } else {
-    console.log(`Creating new contract: ${id}`);
     await createContract(id, row);
   }
 }
@@ -136,7 +132,6 @@ async function updateContract(id, row) {
   let hasUpdates = false;
 
   ALLOWED_FIELDS.forEach(field => {
-    // Only update if the field is in the CSV and not empty
     if (row[field] !== undefined && row[field] !== '') {
       updateExp += `#${field} = :${field}, `;
       attrNames[`#${field}`] = field;
@@ -158,8 +153,9 @@ async function updateContract(id, row) {
 }
 
 function castValue(field, value) {
+  // Convert these specific fields to numbers for DynamoDB
   if (['originalQuantity', 'remainingQuantity', 'netDollars'].includes(field)) {
-    const num = Number(value);
+    const num = Number(value.replace(/[^0-9.-]+/g, "")); // Strip currency symbols or commas
     return isNaN(num) ? 0 : num;
   }
   return value;
@@ -168,10 +164,7 @@ function castValue(field, value) {
 function response(statusCode, body) {
   return {
     statusCode,
-    headers: { 
-      'Access-Control-Allow-Origin': '*', 
-      'Access-Control-Allow-Headers': '*' 
-    },
+    headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*' },
     body: JSON.stringify(body)
   };
 }
