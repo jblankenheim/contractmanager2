@@ -158,16 +158,14 @@ const [uploadPdfType, setUploadPdfType] = useState("contract");
   /* =========================
      RENDER
   ========================= */
-  async function handleUploadContract() {
-  if (!uploadFile) return;
-
+ async function handleUploadContract() {
   try {
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const s3Key = `uploads/contracts/${timestamp}.pdf`;
+    const uploadKey = `uploads/contracts/${timestamp}.pdf`;
 
-    // 1️⃣ Upload to S3
+    // 1️⃣ Upload temp file to S3
     const uploadResult = await uploadData({
-      path: s3Key,
+      path: uploadKey,
       data: uploadFile,
       options: {
         contentType: "application/pdf",
@@ -175,18 +173,25 @@ const [uploadPdfType, setUploadPdfType] = useState("contract");
       },
     }).result;
 
-    // Amplify guarantees the final path here
-    const s3Path = uploadResult.path;
+    const sourceKey = uploadResult.path;
 
-    // 2️⃣ Call contracts API
-    await submitContractPdf({
-      contractNumber: uploadContractNumber,
-      contractType: uploadContractType,
-      pdfType: uploadPdfType,          // "contract" | "addendum"
-      s3Path: s3Path,                  // full S3 object path
+    // 2️⃣ Submit to contracts API
+    const res = await fetch("/contractsAPI/submitEditedContract", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sourceKey,
+        contractNumber: uploadContractNumber,
+        contractType: uploadContractType,
+        pdfType: uploadPdfType,
+      }),
     });
 
-    // 3️⃣ Reset UI + refresh data
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+
+    // 3️⃣ Reset + refresh
     setShowUploadContract(false);
     setUploadFile(null);
     setUploadPreviewUrl(null);
@@ -200,7 +205,7 @@ const [uploadPdfType, setUploadPdfType] = useState("contract");
     alert("Upload failed. Please try again.");
   }
 }
-``
+
   return (
     <div style={{ padding: 20, color: "white" }}>
       {/* HEADER */}
