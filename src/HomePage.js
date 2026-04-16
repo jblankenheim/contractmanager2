@@ -2,23 +2,24 @@ import { useEffect, useState } from "react";
 import { generateClient } from "aws-amplify/api";
 import { getUrl } from "aws-amplify/storage";
 import { listContracts } from "./graphql/queries";
-import ContractSubmissionCard from "./ContractSubmissionCard";
 import BulkUploadPage from "./Bulkuploadpage";
 import logo from "./assets/CFE_Logo.png";
 
 const client = generateClient();
 
 export default function HomePage({ user, signOut }) {
+  /* =========================
+     STATE
+  ========================= */
   const [contracts, setContracts] = useState([]);
   const [filtered, setFiltered] = useState([]);
+
+  const [activeView, setActiveView] = useState("contracts");
 
   const [statusFilter, setStatusFilter] = useState("open");
   const [signedFilter, setSignedFilter] = useState("all");
   const [contractType, setContractType] = useState("ALL");
   const [search, setSearch] = useState("");
-
-  const [activeView, setActiveView] = useState("contracts");
-  const [showSubmissionCard, setShowSubmissionCard] = useState(false);
 
   const [activeMedia, setActiveMedia] = useState(null);
   const [activeContractMedia, setActiveContractMedia] = useState(null);
@@ -26,7 +27,6 @@ export default function HomePage({ user, signOut }) {
   /* =========================
      FETCH CONTRACTS
   ========================= */
-
   useEffect(() => {
     fetchContracts();
   }, []);
@@ -41,8 +41,8 @@ export default function HomePage({ user, signOut }) {
       const items = res?.data?.listContracts?.items ?? [];
 
       const withMedia = await Promise.all(
-        items.map(async (c) => {
-          const parseKey = (key) => {
+        items.map(async c => {
+          const parseKey = key => {
             if (!key) return null;
             try {
               const parsed = JSON.parse(key);
@@ -58,21 +58,16 @@ export default function HomePage({ user, signOut }) {
             c.addendumKey1,
             c.addendumKey2,
             c.duplicateKey,
-          ]
-            .map(parseKey)
-            .filter(Boolean);
-
-          if (!keys.length) return { ...c, media: [] };
+          ].map(parseKey).filter(Boolean);
 
           const media = await Promise.all(
-            keys.map(async (key) => {
+            keys.map(async key => {
               const { url } = await getUrl({ path: key });
               const urlString = url.toString();
-              const type = urlString.toLowerCase().includes(".pdf")
-                ? "pdf"
-                : "image";
-
-              return { url: urlString, type };
+              return {
+                url: urlString,
+                type: urlString.toLowerCase().includes(".pdf") ? "pdf" : "image",
+              };
             })
           );
 
@@ -88,9 +83,8 @@ export default function HomePage({ user, signOut }) {
   }
 
   /* =========================
-     FILTERING
+     FILTERS (GLOBAL)
   ========================= */
-
   useEffect(() => {
     let data = [...contracts];
 
@@ -115,17 +109,30 @@ export default function HomePage({ user, signOut }) {
     setFiltered(data);
   }, [contracts, statusFilter, signedFilter, contractType, search]);
 
+  /* =========================
+     VIEW-BASED FILTERING
+  ========================= */
+  const viewFiltered = filtered.filter(c => {
+    switch (activeView) {
+      case "review":
+        return !c.closedDate && !c.contractSigned;
+      case "close":
+        return c.contractSigned && !c.closedDate;
+      default:
+        return true;
+    }
+  });
+
   const contractTypes = [
     "ALL",
     ...new Set(contracts.map(c => c.contractType).filter(Boolean)),
   ];
 
   /* =========================
-     ESC KEY CLOSES MODALS
+     ESC CLOSE MODALS
   ========================= */
-
   useEffect(() => {
-    const onKey = (e) => {
+    const onKey = e => {
       if (e.key === "Escape") {
         setActiveMedia(null);
         setActiveContractMedia(null);
@@ -138,12 +145,11 @@ export default function HomePage({ user, signOut }) {
   /* =========================
      RENDER
   ========================= */
-
   return (
     <div style={{ padding: 20, color: "white" }}>
       {/* HEADER */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+        <div style={{ display: "flex", gap: 15, alignItems: "center" }}>
           <img src={logo} alt="Logo" style={{ width: 120 }} />
           <h2>Contracts Dashboard</h2>
         </div>
@@ -154,7 +160,9 @@ export default function HomePage({ user, signOut }) {
       <div style={{ display: "flex", gap: 12, margin: "20px 0" }}>
         {[
           { key: "contracts", label: "Contracts" },
-          { key: "uploadData", label: "Upload Data" },
+          { key: "review", label: "Review" },
+          { key: "close", label: "Review for Close" },
+          { key: "bulk", label: "Bulk Upload" },
         ].map(t => (
           <button
             key={t.key}
@@ -172,12 +180,14 @@ export default function HomePage({ user, signOut }) {
         ))}
       </div>
 
-      {activeView === "uploadData" && <BulkUploadPage />}
+      {/* BULK UPLOAD */}
+      {activeView === "bulk" && <BulkUploadPage />}
 
-      {activeView === "contracts" && (
+      {/* CONTRACT VIEWS */}
+      {activeView !== "bulk" && (
         <>
-          {/* FILTERS */}
-          <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+          {/* FILTER BAR */}
+          <div style={{ display: "flex", gap: 10 }}>
             <select value={contractType} onChange={e => setContractType(e.target.value)}>
               {contractTypes.map(t => (
                 <option key={t}>{t}</option>
@@ -214,21 +224,16 @@ export default function HomePage({ user, signOut }) {
                 <th>Closed</th>
               </tr>
             </thead>
-
             <tbody>
-              {filtered.map(c => (
+              {viewFiltered.map(c => (
                 <tr
                   key={c.id}
                   style={{ cursor: "pointer" }}
                   onClick={() => {
-                    const contractPdf = c.media.find(
-                      m => m.type === "pdf" && !m.url.includes("transaction.pdf")
+                    const contractPdf = c.media.find(m => m.type === "pdf");
+                    const transactionPdf = c.media.find(m =>
+                      m.url.includes("transaction")
                     );
-                    const transactionPdf = c.media.find(
-                      m => m.url.includes("transaction.pdf")
-                    );
-
-                    setActiveMedia(null);
                     setActiveContractMedia({ contractPdf, transactionPdf });
                   }}
                 >
@@ -240,7 +245,6 @@ export default function HomePage({ user, signOut }) {
                         key={i}
                         onClick={e => {
                           e.stopPropagation();
-                          setActiveContractMedia(null);
                           setActiveMedia(m);
                         }}
                       >
@@ -257,41 +261,26 @@ export default function HomePage({ user, signOut }) {
         </>
       )}
 
-      {/* SINGLE DOCUMENT MODAL */}
+      {/* MODALS (unchanged from your logic) */}
       {activeMedia && (
         <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 1000 }}>
-          <div style={{ display: "flex", justifyContent: "flex-end", padding: 10 }}>
-            <button onClick={() => window.print()}>🖨️ Print</button>
-            <button onClick={() => setActiveMedia(null)}>✕ Close</button>
-          </div>
+          <button onClick={() => setActiveMedia(null)}>Close</button>
           <iframe src={activeMedia.url} style={{ width: "100%", height: "100%" }} />
         </div>
       )}
 
-      {/* COMBINED MODAL */}
       {activeContractMedia && (
         <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 1000 }}>
-          <div style={{ display: "flex", justifyContent: "flex-end", padding: 10 }}>
-            <button onClick={() => window.print()}>🖨️ Print All</button>
-            <button onClick={() => setActiveContractMedia(null)}>✕ Close</button>
-          </div>
-
-          <div style={{ overflowY: "auto", height: "100%" }}>
-            {activeContractMedia.contractPdf && (
-              <iframe
-                src={activeContractMedia.contractPdf.url}
-                style={{ width: "100%", height: "100vh" }}
-              />
-            )}
-            {activeContractMedia.transactionPdf && (
-              <iframe
-                src={activeContractMedia.transactionPdf.url}
-                style={{ width: "100%", height: "100vh" }}
-              />
-            )}
-          </div>
+          <button onClick={() => setActiveContractMedia(null)}>Close</button>
+          {activeContractMedia.contractPdf && (
+            <iframe src={activeContractMedia.contractPdf.url} style={{ width: "100%", height: "100vh" }} />
+          )}
+          {activeContractMedia.transactionPdf && (
+            <iframe src={activeContractMedia.transactionPdf.url} style={{ width: "100%", height: "100vh" }} />
+          )}
         </div>
       )}
     </div>
   );
 }
+
