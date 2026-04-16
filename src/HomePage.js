@@ -23,6 +23,15 @@ export default function HomePage({ user, signOut }) {
 
   const [activeMedia, setActiveMedia] = useState(null);
   const [activeContractMedia, setActiveContractMedia] = useState(null);
+  
+const [showUploadContract, setShowUploadContract] = useState(false);
+const [uploadFile, setUploadFile] = useState(null);
+const [uploadPreviewUrl, setUploadPreviewUrl] = useState(null);
+
+const [uploadContractNumber, setUploadContractNumber] = useState("");
+const [uploadContractType, setUploadContractType] = useState("");
+const [uploadPdfType, setUploadPdfType] = useState("contract");
+
 
   /* =========================
      FETCH CONTRACTS
@@ -213,6 +222,21 @@ export default function HomePage({ user, signOut }) {
             />
           </div>
 
+<div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+  <button
+    onClick={() => setShowUploadContract(true)}
+    style={{
+      padding: "10px 16px",
+      background: "#238636",
+      color: "white",
+      borderRadius: 6,
+      fontWeight: "bold",
+    }}
+  >
+    Upload Contract
+  </button>
+</div>
+
           {/* TABLE */}
           <table style={{ width: "100%", marginTop: 20 }}>
             <thead>
@@ -280,6 +304,133 @@ export default function HomePage({ user, signOut }) {
           )}
         </div>
       )}
+        
+{showUploadContract && (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "#000",
+      zIndex: 2000,
+      padding: 20,
+      display: "flex",
+      flexDirection: "column",
+      gap: 20,
+    }}
+  >
+    {/* HEADER */}
+    <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <h2>Upload Contract</h2>
+      <button onClick={() => {
+        setShowUploadContract(false);
+        setUploadFile(null);
+        setUploadPreviewUrl(null);
+        setUploadContractNumber("");
+        setUploadContractType("");
+        setUploadPdfType("contract");
+      }}>
+        ✕ Close
+      </button>
+    </div>
+
+    {/* FORM */}
+    <div style={{ display: "flex", gap: 12 }}>
+      <input
+        placeholder="Contract Number"
+        value={uploadContractNumber}
+        onChange={e => setUploadContractNumber(e.target.value)}
+      />
+
+      <select
+        value={uploadContractType}
+        onChange={e => setUploadContractType(e.target.value)}
+      >
+        <option value="">Select Contract Type</option>
+        {contractTypes
+          .filter(t => t !== "ALL")
+          .map(t => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+      </select>
+
+      <select
+        value={uploadPdfType}
+        onChange={e => setUploadPdfType(e.target.value)}
+      >
+        <option value="contract">Contract</option>
+        <option value="addendum">Addendum</option>
+      </select>
+
+      <input
+        type="file"
+        accept="application/pdf"
+        onChange={e => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          setUploadFile(file);
+          setUploadPreviewUrl(URL.createObjectURL(file));
+        }}
+      />
+    </div>
+
+    {/* PREVIEW */}
+    <div style={{ flex: 1, border: "1px solid #333" }}>
+      {uploadPreviewUrl ? (
+        <iframe
+          src={uploadPreviewUrl}
+          style={{ width: "100%", height: "100%" }}
+        />
+      ) : (
+        <div style={{ padding: 40, color: "#888" }}>
+          Select a PDF to preview
+        </div>
+      )}
+    </div>
+
+    {/* ACTION BAR */}
+    <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+      <button onClick={() => setShowUploadContract(false)}>Cancel</button>
+
+      <button
+        style={{
+          background: "#1f6feb",
+          color: "white",
+          padding: "10px 18px",
+          borderRadius: 6,
+          fontWeight: "bold",
+        }}
+        onClick={() => {
+          /**
+           * THIS is where your next API call goes.
+           * All required values are ready:
+           *
+           * uploadFile
+           * uploadContractNumber
+           * uploadContractType
+           * uploadPdfType
+           */
+          console.log({
+            uploadFile,
+            uploadContractNumber,
+            uploadContractType,
+            uploadPdfType,
+          });
+        }}
+        disabled={
+          !uploadFile ||
+          !uploadContractNumber ||
+          !uploadContractType
+        }
+      >
+        Upload
+      </button>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
