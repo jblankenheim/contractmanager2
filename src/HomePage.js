@@ -3,6 +3,10 @@ import { generateClient } from "aws-amplify/api";
 import { getUrl } from "aws-amplify/storage";
 import { listContracts } from "./graphql/queries";
 import BulkUploadPage from "./Bulkuploadpage";
+
+import { uploadData } from "aws-amplify/storage";
+import { submitContractPdf } from "./contractsAPI
+
 import logo from "./assets/CFE_Logo.png";
 
 const client = generateClient();
@@ -154,6 +158,49 @@ const [uploadPdfType, setUploadPdfType] = useState("contract");
   /* =========================
      RENDER
   ========================= */
+  async function handleUploadContract() {
+  if (!uploadFile) return;
+
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const s3Key = `uploads/contracts/${timestamp}.pdf`;
+
+    // 1️⃣ Upload to S3
+    const uploadResult = await uploadData({
+      path: s3Key,
+      data: uploadFile,
+      options: {
+        contentType: "application/pdf",
+        accessLevel: "public",
+      },
+    }).result;
+
+    // Amplify guarantees the final path here
+    const s3Path = uploadResult.path;
+
+    // 2️⃣ Call contracts API
+    await submitContractPdf({
+      contractNumber: uploadContractNumber,
+      contractType: uploadContractType,
+      pdfType: uploadPdfType,          // "contract" | "addendum"
+      s3Path: s3Path,                  // full S3 object path
+    });
+
+    // 3️⃣ Reset UI + refresh data
+    setShowUploadContract(false);
+    setUploadFile(null);
+    setUploadPreviewUrl(null);
+    setUploadContractNumber("");
+    setUploadContractType("");
+    setUploadPdfType("contract");
+
+    fetchContracts();
+  } catch (err) {
+    console.error("Upload failed:", err);
+    alert("Upload failed. Please try again.");
+  }
+}
+``
   return (
     <div style={{ padding: 20, color: "white" }}>
       {/* HEADER */}
@@ -394,39 +441,24 @@ const [uploadPdfType, setUploadPdfType] = useState("contract");
     <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
       <button onClick={() => setShowUploadContract(false)}>Cancel</button>
 
-      <button
-        style={{
-          background: "#1f6feb",
-          color: "white",
-          padding: "10px 18px",
-          borderRadius: 6,
-          fontWeight: "bold",
-        }}
-        onClick={() => {
-          /**
-           * THIS is where your next API call goes.
-           * All required values are ready:
-           *
-           * uploadFile
-           * uploadContractNumber
-           * uploadContractType
-           * uploadPdfType
-           */
-          console.log({
-            uploadFile,
-            uploadContractNumber,
-            uploadContractType,
-            uploadPdfType,
-          });
-        }}
-        disabled={
-          !uploadFile ||
-          !uploadContractNumber ||
-          !uploadContractType
-        }
-      >
-        Upload
-      </button>
+     <button
+  style={{
+    background: "#1f6feb",
+    color: "white",
+    padding: "10px 18px",
+    borderRadius: 6,
+    fontWeight: "bold",
+  }}
+  onClick={handleUploadContract}
+  disabled={
+    !uploadFile ||
+    !uploadContractNumber ||
+    !uploadContractType
+  }
+>
+  Upload
+</button>
+
     </div>
   </div>
 )}
