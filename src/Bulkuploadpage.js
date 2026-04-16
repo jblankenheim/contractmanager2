@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { uploadData, list } from "aws-amplify/storage";
+import { uploadData, remove, list } from "aws-amplify/storage";
 import { post } from "aws-amplify/api";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
 const TABS = [
   { key: "contracts", label: "Contract Data" },
   { key: "transactions", label: "Transaction Data" },
@@ -15,29 +14,12 @@ const S3_PREFIX = {
 };
 
 const API_NAME = "contractsAPI";
-const API_PATH_Contracts = "/rawContractsData";
-const API_PATH_Transactions = "/rawTransactionsData";
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
+// ─── Styles (Defined here so they are accessible to all functions) ──────────
 const styles = {
-  root: {
-    padding: "24px 20px",
-    color: "white",
-    fontFamily: "inherit",
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: 600,
-    marginBottom: 20,
-    color: "#e6edf3",
-  },
-  tabBar: {
-    display: "flex",
-    gap: 0,
-    marginBottom: 24,
-    borderBottom: "1px solid #30363d",
-  },
+  root: { padding: "24px 20px", color: "white", fontFamily: "inherit" },
+  heading: { fontSize: 20, fontWeight: 600, marginBottom: 20, color: "#e6edf3" },
+  tabBar: { display: "flex", gap: 0, marginBottom: 24, borderBottom: "1px solid #30363d" },
   tab: (active) => ({
     padding: "10px 24px",
     background: "transparent",
@@ -50,27 +32,9 @@ const styles = {
     marginBottom: -1,
     transition: "color 0.15s, border-color 0.15s",
   }),
-  section: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 20,
-  },
-  uploadRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    flexWrap: "wrap",
-  },
-  uploadBtn: {
-    padding: "9px 20px",
-    background: "#1f6feb",
-    color: "white",
-    border: "none",
-    borderRadius: 6,
-    cursor: "pointer",
-    fontWeight: 500,
-    fontSize: 14,
-  },
+  section: { display: "flex", flexDirection: "column", gap: 20 },
+  uploadRow: { display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" },
+  uploadBtn: { padding: "9px 20px", background: "#1f6feb", color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: 500, fontSize: 14 },
   submitBtn: (disabled) => ({
     padding: "9px 20px",
     background: disabled ? "#2a2a2a" : "#238636",
@@ -81,380 +45,161 @@ const styles = {
     fontWeight: 500,
     fontSize: 14,
   }),
-  selectedLabel: {
-    fontSize: 13,
-    color: "#8b949e",
-    fontStyle: "italic",
-  },
-  tableWrap: {
-    border: "1px solid #30363d",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    fontSize: 14,
-  },
-  th: {
-    background: "#161b22",
-    color: "#8b949e",
-    textAlign: "left",
-    padding: "10px 14px",
-    fontWeight: 500,
-    borderBottom: "1px solid #30363d",
-  },
-  tr: (selected) => ({
-    background: selected ? "#1c2d3f" : "transparent",
-    cursor: "pointer",
-  }),
-  td: {
-    padding: "10px 14px",
-    borderBottom: "1px solid #21262d",
-    color: "#c9d1d9",
-  },
-  checkbox: {
-    width: 16,
-    height: 16,
-    cursor: "pointer",
-    accentColor: "#1f6feb",
-  },
-  statusBadge: (type) => ({
-    display: "inline-block",
-    padding: "2px 10px",
-    borderRadius: 12,
-    fontSize: 12,
-    fontWeight: 500,
-    background:
-      type === "success" ? "#1a3a2a" :
-        type === "error" ? "#3a1a1a" :
-          "#1a2a3a",
-    color:
-      type === "success" ? "#3fb950" :
-        type === "error" ? "#f85149" :
-          "#58a6ff",
-  }),
-  emptyRow: {
-    textAlign: "center",
-    padding: "24px",
-    color: "#555",
-    fontSize: 13,
-  },
+  tableWrap: { border: "1px solid #30363d", borderRadius: 8, overflow: "hidden" },
+  table: { width: "100%", borderCollapse: "collapse", fontSize: 14 },
+  th: { background: "#161b22", color: "#8b949e", textAlign: "left", padding: "10px 14px", fontWeight: 500, borderBottom: "1px solid #30363d" },
+  tr: (selected) => ({ background: selected ? "#1c2d3f" : "transparent", cursor: "pointer" }),
+  td: { padding: "10px 14px", borderBottom: "1px solid #21262d", color: "#c9d1d9" },
+  emptyRow: { textAlign: "center", padding: "24px", color: "#555", fontSize: 13 },
   toast: (type) => ({
-    marginTop: 4,
-    padding: "10px 16px",
-    borderRadius: 6,
-    fontSize: 13,
+    marginTop: 4, padding: "10px 16px", borderRadius: 6, fontSize: 13,
     background: type === "success" ? "#1a3a2a" : "#3a1a1a",
     color: type === "success" ? "#3fb950" : "#f85149",
     border: `1px solid ${type === "success" ? "#238636" : "#da3633"}`,
   }),
 };
 
-// ─── BulkUploadPage ───────────────────────────────────────────────────────────
-
+// ─── Main Page ───────────────────────────────────────────────────────────────
 export default function BulkUploadPage() {
   const [activeTab, setActiveTab] = useState("contracts");
 
   return (
     <div style={styles.root}>
-      <h2 style={styles.heading}>Bulk Upload</h2>
-
+      <h2 style={styles.heading}>Bulk Upload Manager</h2>
       <div style={styles.tabBar}>
         {TABS.map((t) => (
-          <button
-            key={t.key}
-            style={styles.tab(activeTab === t.key)}
-            onClick={() => setActiveTab(t.key)}
-          >
+          <button key={t.key} style={styles.tab(activeTab === t.key)} onClick={() => setActiveTab(t.key)}>
             {t.label}
           </button>
         ))}
       </div>
-
-      {/* Re-mount on tab switch so each tab has its own isolated state */}
       <BulkTab key={activeTab} tabKey={activeTab} />
     </div>
   );
 }
 
-// ─── BulkTab ──────────────────────────────────────────────────────────────────
-
+// ─── Tab Component ───────────────────────────────────────────────────────────
 function BulkTab({ tabKey }) {
   const fileInputRef = useRef(null);
-
   const [s3Files, setS3Files] = useState([]);
-  const [selected, setSelected] = useState(new Set());
+  const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState({});   // filename → "uploading"|"done"|"error"
   const [submitting, setSubmitting] = useState(false);
-  const [toast, setToast] = useState(null); // { type, message }
+  const [toast, setToast] = useState(null);
   const [pendingFiles, setPendingFiles] = useState([]);
+
   const API_PATHS = {
-    contracts: "/rawContractsData",
+    contracts: "/rawContractData",
     transactions: "/rawTransactionsData",
   };
-  useEffect(() => {
-    loadS3Files();
-  }, []);
+
+  useEffect(() => { loadS3Files(); }, [tabKey]);
 
   async function loadS3Files() {
     try {
-      const result = await list({ prefix: S3_PREFIX[tabKey] });
-      const items = (result?.items ?? []).filter(
-        (item) => item.key !== S3_PREFIX[tabKey]
-      );
+      const result = await list({ path: S3_PREFIX[tabKey] });
+      const items = (result?.items ?? []).filter(item => item.path !== S3_PREFIX[tabKey]);
       setS3Files(items);
-    } catch (err) {
-      console.error("Failed to list S3 files:", err);
-    }
+    } catch (err) { console.error(err); }
   }
 
   function handlePickFiles(e) {
     const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-    setPendingFiles(files);
+    if (files.length) setPendingFiles(files);
     e.target.value = "";
   }
 
   async function handleUpload() {
     if (!pendingFiles.length) return;
     setUploading(true);
-
-    const initial = {};
-    pendingFiles.forEach((f) => { initial[f.name] = "uploading"; });
-    setUploadStatus((prev) => ({ ...prev, ...initial }));
-
-    await Promise.all(
-      pendingFiles.map(async (file) => {
+    try {
+      await Promise.all(pendingFiles.map(async (file) => {
         const key = `${S3_PREFIX[tabKey]}${file.name}`;
-        try {
-          await uploadData({ path: key, data: file }).result;
-          setUploadStatus((prev) => ({ ...prev, [file.name]: "done" }));
-        } catch (err) {
-          console.error("Upload failed:", file.name, err);
-          setUploadStatus((prev) => ({ ...prev, [file.name]: "error" }));
-        }
-      })
-    );
-
-    setUploading(false);
-    setPendingFiles([]);
-    await loadS3Files();
+        await uploadData({ path: key, data: file }).result;
+      }));
+      setToast({ type: "success", message: "Uploads complete!" });
+      setPendingFiles([]);
+      await loadS3Files();
+    } catch (err) { setToast({ type: "error", message: "Upload failed." }); }
+    finally { setUploading(false); }
   }
 
-  function toggleSelect(key) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
-  }
-
-  function toggleAll() {
-    if (selected.size === s3Files.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(s3Files.map((f) => f.key)));
-    }
+  async function handleDelete(path) {
+    if (!window.confirm("Delete file?")) return;
+    try {
+      await remove({ path });
+      if (selectedFile === path) setSelectedFile(null);
+      await loadS3Files();
+    } catch (err) { setToast({ type: "error", message: "Delete failed." }); }
   }
 
   async function handleSubmit() {
-    if (!selected.size || submitting) return;
-
+    if (!selectedFile || submitting) return;
     setSubmitting(true);
-    setToast(null);
-
-    const path = API_PATHS[tabKey];
-
     try {
       const response = await post({
         apiName: API_NAME,
-        path: path,
-        options: {
-          body: {
-            tab: tabKey,
-            files: Array.from(selected),
-          },
-        },
+        path: API_PATHS[tabKey],
+        options: { body: { file: selectedFile } },
       }).response;
-
-      const body = await response.body.json();
-
-      setToast({
-        type: "success",
-        message:
-          body?.message ??
-          `Successfully submitted ${selected.size} file(s).`,
-      });
-
-      setSelected(new Set());
-    } catch (err) {
-      console.error("Submit failed:", err);
-
-      setToast({
-        type: "error",
-        message: err?.message ?? "Submission failed. Please try again.",
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  function fileName(key) {
-    return key.replace(S3_PREFIX[tabKey], "");
+      const resJson = await response.body.json();
+      setToast({ type: "success", message: resJson.message || "Processed!" });
+      setSelectedFile(null);
+    } catch (err) { setToast({ type: "error", message: "Failed." }); }
+    finally { setSubmitting(false); }
   }
 
   function formatSize(bytes) {
-    if (bytes == null) return "—";
-    if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-    if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${bytes} B`;
+    if (!bytes) return "0 B";
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return parseFloat((bytes / Math.pow(1024, i)).toFixed(1)) + " " + ["B", "KB", "MB", "GB"][i];
   }
-
-  const allSelected = s3Files.length > 0 && selected.size === s3Files.length;
 
   return (
     <div style={styles.section}>
-
-      {/* ── Upload controls ── */}
       <div style={styles.uploadRow}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv"
-          multiple
-          style={{ display: "none" }}
-          onChange={handlePickFiles}
-        />
-
-        <button
-          style={styles.uploadBtn}
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-        >
-          📂 Choose CSV File(s)
-        </button>
-
+        <input type="file" ref={fileInputRef} style={{ display: "none" }} multiple onChange={handlePickFiles} />
+        <button style={styles.uploadBtn} onClick={() => fileInputRef.current.click()}>Pick Files</button>
         {pendingFiles.length > 0 && (
-          <>
-            <span style={styles.selectedLabel}>
-              {pendingFiles.map((f) => f.name).join(", ")}
-            </span>
-            <button
-              style={styles.uploadBtn}
-              onClick={handleUpload}
-              disabled={uploading}
-            >
-              {uploading ? "Uploading…" : "⬆ Upload to S3"}
-            </button>
-          </>
+          <button style={styles.submitBtn(uploading)} onClick={handleUpload}>
+            {uploading ? "Uploading..." : `Upload to S3 (${pendingFiles.length})`}
+          </button>
         )}
+        <button style={styles.submitBtn(!selectedFile || submitting)} onClick={handleSubmit}>
+          {submitting ? "Processing..." : `Process ${tabKey}`}
+        </button>
       </div>
 
-      {/* ── Per-file upload badges ── */}
-      {Object.keys(uploadStatus).length > 0 && (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {Object.entries(uploadStatus).map(([name, status]) => (
-            <span
-              key={name}
-              style={styles.statusBadge(
-                status === "done" ? "success" : status === "error" ? "error" : "loading"
-              )}
-            >
-              {status === "done" ? "✔ " : status === "error" ? "✖ " : "⏳ "}
-              {name}
-            </span>
-          ))}
-        </div>
-      )}
+      {toast && <div style={styles.toast(toast.type)}>{toast.message}</div>}
 
-      {/* ── File table ── */}
       <div style={styles.tableWrap}>
         <table style={styles.table}>
           <thead>
             <tr>
-              <th style={{ ...styles.th, width: 40 }}>
-                <input
-                  type="checkbox"
-                  style={styles.checkbox}
-                  checked={allSelected}
-                  onChange={toggleAll}
-                  disabled={s3Files.length === 0}
-                />
-              </th>
-              <th style={styles.th}>File Name</th>
+              <th style={{ width: 40 }}>Select</th>
+              <th style={styles.th}>Filename</th>
               <th style={styles.th}>Size</th>
-              <th style={styles.th}>Last Modified</th>
+              <th style={styles.th}>Action</th>
             </tr>
           </thead>
           <tbody>
             {s3Files.length === 0 ? (
-              <tr>
-                <td colSpan={4} style={styles.emptyRow}>
-                  No files found in S3. Upload a CSV above to get started.
-                </td>
-              </tr>
+              <tr><td colSpan="4" style={styles.emptyRow}>No files found.</td></tr>
             ) : (
-              s3Files.map((file) => {
-                const isSelected = selected.has(file.key);
-                return (
-                  <tr
-                    key={file.key}
-                    style={styles.tr(isSelected)}
-                    onClick={() => toggleSelect(file.key)}
-                  >
-                    <td style={styles.td} onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        style={styles.checkbox}
-                        checked={isSelected}
-                        onChange={() => toggleSelect(file.key)}
-                      />
-                    </td>
-                    <td style={styles.td}>{fileName(file.key)}</td>
-                    <td style={styles.td}>{formatSize(file.size)}</td>
-                    <td style={styles.td}>
-                      {file.lastModified
-                        ? new Date(file.lastModified).toLocaleString()
-                        : "—"}
-                    </td>
-                  </tr>
-                );
-              })
+              s3Files.map((file) => (
+                <tr key={file.path} style={styles.tr(selectedFile === file.path)} onClick={() => setSelectedFile(file.path === selectedFile ? null : file.path)}>
+                  <td style={styles.td}><input type="checkbox" checked={selectedFile === file.path} readOnly /></td>
+                  <td style={styles.td}>{file.path.split('/').pop()}</td>
+                  <td style={styles.td}>{formatSize(file.size)}</td>
+                  <td style={styles.td}>
+                    <button style={{ ...styles.uploadBtn, background: '#30363d', color: '#f85149', padding: '6px 12px' }} onClick={(e) => { e.stopPropagation(); handleDelete(file.path); }}>Delete</button>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
       </div>
-
-      {/* ── Submit row ── */}
-      <div style={styles.uploadRow}>
-        <button
-          style={styles.submitBtn(!selected.size || submitting)}
-          disabled={!selected.size || submitting}
-          onClick={handleSubmit}
-        >
-          {submitting
-            ? "Submitting…"
-            : selected.size
-              ? `Submit Upload (${selected.size} file${selected.size > 1 ? "s" : ""})`
-              : "Submit Upload"}
-        </button>
-
-        {selected.size > 0 && !submitting && (
-          <span style={styles.selectedLabel}>
-            {selected.size} file{selected.size > 1 ? "s" : ""} selected
-          </span>
-        )}
-      </div>
-
-      {/* ── Toast ── */}
-      {toast && (
-        <div style={styles.toast(toast.type)}>
-          {toast.type === "success" ? "✔ " : "✖ "}
-          {toast.message}
-        </div>
-      )}
     </div>
   );
 }

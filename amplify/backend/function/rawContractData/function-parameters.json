@@ -14,12 +14,6 @@
         "update",
         "delete"
       ],
-      "TransactionDate:@model(appsync)": [
-        "create",
-        "read",
-        "update",
-        "delete"
-      ],
       "Contract:@model(appsync)": [
         "create",
         "read",

@@ -1,103 +1,29 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
-export const getTransactionDate = /* GraphQL */ `
-  query GetTransactionDate($id: ID!) {
-    getTransactionDate(id: $id) {
-      id
-      date
-      JSON
-      remainingBushels
-      remainingDollars
-      contractID
-      createdAt
-      updatedAt
-      __typename
-    }
-  }
-`;
-export const listTransactionDates = /* GraphQL */ `
-  query ListTransactionDates(
-    $filter: ModelTransactionDateFilterInput
-    $limit: Int
-    $nextToken: String
-  ) {
-    listTransactionDates(
-      filter: $filter
-      limit: $limit
-      nextToken: $nextToken
-    ) {
-      items {
-        id
-        date
-        JSON
-        remainingBushels
-        remainingDollars
-        contractID
-        createdAt
-        updatedAt
-        __typename
-      }
-      nextToken
-      __typename
-    }
-  }
-`;
-export const transactionDatesByContractID = /* GraphQL */ `
-  query TransactionDatesByContractID(
-    $contractID: ID!
-    $sortDirection: ModelSortDirection
-    $filter: ModelTransactionDateFilterInput
-    $limit: Int
-    $nextToken: String
-  ) {
-    transactionDatesByContractID(
-      contractID: $contractID
-      sortDirection: $sortDirection
-      filter: $filter
-      limit: $limit
-      nextToken: $nextToken
-    ) {
-      items {
-        id
-        date
-        JSON
-        remainingBushels
-        remainingDollars
-        contractID
-        createdAt
-        updatedAt
-        __typename
-      }
-      nextToken
-      __typename
-    }
-  }
-`;
 export const getContract = /* GraphQL */ `
   query GetContract($id: ID!) {
     getContract(id: $id) {
       id
       contractType
       contractNumber
-      contractName
-      contractLocation
-      contractBushels
-      contractDollars
-      remainingBushels
-      remainingDollars
+      name
+      location
+      originalQuantity
+      contractDate
+      remainingQuantity
+      netDollars
       closedDate
       closedBy
-      markforReview
       settlementReference
+      markforReview
+      locked
       pictureKey
       addendumKey1
       addendumKey2
       duplicateKey
-      TransactionDates {
-        nextToken
-        __typename
-      }
+      notes
+      TransactionDates
       createdAt
       updatedAt
       __typename
@@ -115,20 +41,23 @@ export const listContracts = /* GraphQL */ `
         id
         contractType
         contractNumber
-        contractName
-        contractLocation
-        contractBushels
-        contractDollars
-        remainingBushels
-        remainingDollars
+        name
+        location
+        originalQuantity
+        contractDate
+        remainingQuantity
+        netDollars
         closedDate
         closedBy
-        markforReview
         settlementReference
+        markforReview
+        locked
         pictureKey
         addendumKey1
         addendumKey2
         duplicateKey
+        notes
+        TransactionDates
         createdAt
         updatedAt
         __typename
@@ -157,20 +86,23 @@ export const contractsByType = /* GraphQL */ `
         id
         contractType
         contractNumber
-        contractName
-        contractLocation
-        contractBushels
-        contractDollars
-        remainingBushels
-        remainingDollars
+        name
+        location
+        originalQuantity
+        contractDate
+        remainingQuantity
+        netDollars
         closedDate
         closedBy
-        markforReview
         settlementReference
+        markforReview
+        locked
         pictureKey
         addendumKey1
         addendumKey2
         duplicateKey
+        notes
+        TransactionDates
         createdAt
         updatedAt
         __typename
@@ -199,20 +131,23 @@ export const contractsByNumber = /* GraphQL */ `
         id
         contractType
         contractNumber
-        contractName
-        contractLocation
-        contractBushels
-        contractDollars
-        remainingBushels
-        remainingDollars
+        name
+        location
+        originalQuantity
+        contractDate
+        remainingQuantity
+        netDollars
         closedDate
         closedBy
-        markforReview
         settlementReference
+        markforReview
+        locked
         pictureKey
         addendumKey1
         addendumKey2
         duplicateKey
+        notes
+        TransactionDates
         createdAt
         updatedAt
         __typename
@@ -224,14 +159,14 @@ export const contractsByNumber = /* GraphQL */ `
 `;
 export const contractsByName = /* GraphQL */ `
   query ContractsByName(
-    $contractName: String!
+    $name: String!
     $sortDirection: ModelSortDirection
     $filter: ModelContractFilterInput
     $limit: Int
     $nextToken: String
   ) {
     contractsByName(
-      contractName: $contractName
+      name: $name
       sortDirection: $sortDirection
       filter: $filter
       limit: $limit
@@ -241,20 +176,23 @@ export const contractsByName = /* GraphQL */ `
         id
         contractType
         contractNumber
-        contractName
-        contractLocation
-        contractBushels
-        contractDollars
-        remainingBushels
-        remainingDollars
+        name
+        location
+        originalQuantity
+        contractDate
+        remainingQuantity
+        netDollars
         closedDate
         closedBy
-        markforReview
         settlementReference
+        markforReview
+        locked
         pictureKey
         addendumKey1
         addendumKey2
         duplicateKey
+        notes
+        TransactionDates
         createdAt
         updatedAt
         __typename

@@ -98,32 +98,6 @@
             "STORAGE_S3CONTRACTMANAGER2STORAGE87F59124_BUCKETNAME": {
               "Ref": "storages3contractmanager2storage87f59124BucketName"
             },
-            "API_CONTRACTMANAGER2_TRANSACTIONDATETABLE_NAME": {
-              "Fn::ImportValue": {
-                "Fn::Sub": "${apicontractmanager2GraphQLAPIIdOutput}:GetAtt:TransactionDateTable:Name"
-              }
-            },
-            "API_CONTRACTMANAGER2_TRANSACTIONDATETABLE_ARN": {
-              "Fn::Join": [
-                "",
-                [
-                  "arn:aws:dynamodb:",
-                  {
-                    "Ref": "AWS::Region"
-                  },
-                  ":",
-                  {
-                    "Ref": "AWS::AccountId"
-                  },
-                  ":table/",
-                  {
-                    "Fn::ImportValue": {
-                      "Fn::Sub": "${apicontractmanager2GraphQLAPIIdOutput}:GetAtt:TransactionDateTable:Name"
-                    }
-                  }
-                ]
-              ]
-            },
             "API_CONTRACTMANAGER2_CONTRACTTABLE_NAME": {
               "Fn::ImportValue": {
                 "Fn::Sub": "${apicontractmanager2GraphQLAPIIdOutput}:GetAtt:ContractTable:Name"
@@ -362,72 +336,6 @@
                         "Ref": "storages3contractmanager2storage87f59124BucketName"
                       },
                       "/*"
-                    ]
-                  ]
-                }
-              ]
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "dynamodb:Put*",
-                "dynamodb:Create*",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PartiQLInsert",
-                "dynamodb:Get*",
-                "dynamodb:BatchGetItem",
-                "dynamodb:List*",
-                "dynamodb:Describe*",
-                "dynamodb:Scan",
-                "dynamodb:Query",
-                "dynamodb:PartiQLSelect",
-                "dynamodb:Update*",
-                "dynamodb:RestoreTable*",
-                "dynamodb:PartiQLUpdate",
-                "dynamodb:Delete*",
-                "dynamodb:PartiQLDelete"
-              ],
-              "Resource": [
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:aws:dynamodb:",
-                      {
-                        "Ref": "AWS::Region"
-                      },
-                      ":",
-                      {
-                        "Ref": "AWS::AccountId"
-                      },
-                      ":table/",
-                      {
-                        "Fn::ImportValue": {
-                          "Fn::Sub": "${apicontractmanager2GraphQLAPIIdOutput}:GetAtt:TransactionDateTable:Name"
-                        }
-                      }
-                    ]
-                  ]
-                },
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:aws:dynamodb:",
-                      {
-                        "Ref": "AWS::Region"
-                      },
-                      ":",
-                      {
-                        "Ref": "AWS::AccountId"
-                      },
-                      ":table/",
-                      {
-                        "Fn::ImportValue": {
-                          "Fn::Sub": "${apicontractmanager2GraphQLAPIIdOutput}:GetAtt:TransactionDateTable:Name"
-                        }
-                      },
-                      "/index/*"
                     ]
                   ]
                 }

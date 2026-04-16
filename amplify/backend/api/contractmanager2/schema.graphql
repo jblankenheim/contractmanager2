@@ -1,21 +1,3 @@
-type TransactionDate @model @auth(rules: [{allow: public}]) {
-  id: ID!
-  date: AWSDate
-  JSON: AWSJSON
-  remainingBushels: Float
-  remainingDollars: Float
-  contractID: ID! @index(name: "byContract")
-}
-
-enum ContractTypes {
-  DEFERRED_PAYMENT
-  PRICED_LATER
-  EXTENDED_PRICING
-  CASH_BUY
-  MINIMUM_PRICE
-  UNASSIGNED
-}
-
 type Contract @model @auth(rules: [{allow: public}]) {
   id: ID!
 
@@ -23,20 +5,33 @@ type Contract @model @auth(rules: [{allow: public}]) {
     @index(name: "byContractType", queryField: "contractsByType")
   contractNumber: String
   @index(name: "byContractNumber", queryField: "contractsByNumber")
-  contractName: String
+  name: String
     @index(name: "byContractName", queryField: "contractsByName")
-  contractLocation: String
-  contractBushels: String
-  contractDollars: Float
-  remainingBushels: Float
-  remainingDollars: Float
+  location: String
+  originalQuantity: Float
+  contractDate: AWSDate
+  remainingQuantity: Float
+  netDollars: Float
   closedDate: AWSDate
   closedBy: String
-  markforReview: Boolean
   settlementReference: String
+  markforReview: Boolean
+  locked: Boolean  
   pictureKey: String
   addendumKey1: String
   addendumKey2: String
   duplicateKey: AWSJSON
-  TransactionDates: [TransactionDate] @hasMany(indexName: "byContract", fields: ["id"])
+  notes: String
+  TransactionDates: AWSJSON
+  }
+  enum ContractTypes {
+  BASIS_FIXED
+  DEFERRED_PAYMENT
+  PRICED_LATER
+  EXTENDED_PRICING
+  CASH_BUY
+  MINIMUM_PRICED
+  HEDGED_TO_ARRIVE
+  UNASSIGNED
 }
+

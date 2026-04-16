@@ -35,20 +35,23 @@ export default function ContractUpdateForm(props) {
   const initialValues = {
     contractType: "",
     contractNumber: "",
-    contractName: "",
-    contractLocation: "",
-    contractBushels: "",
-    contractDollars: "",
-    remainingBushels: "",
-    remainingDollars: "",
+    name: "",
+    location: "",
+    originalQuantity: "",
+    contractDate: "",
+    remainingQuantity: "",
+    netDollars: "",
     closedDate: "",
     closedBy: "",
-    markforReview: false,
     settlementReference: "",
+    markforReview: false,
+    locked: false,
     pictureKey: "",
     addendumKey1: "",
     addendumKey2: "",
     duplicateKey: "",
+    notes: "",
+    TransactionDates: "",
   };
   const [contractType, setContractType] = React.useState(
     initialValues.contractType
@@ -56,32 +59,27 @@ export default function ContractUpdateForm(props) {
   const [contractNumber, setContractNumber] = React.useState(
     initialValues.contractNumber
   );
-  const [contractName, setContractName] = React.useState(
-    initialValues.contractName
+  const [name, setName] = React.useState(initialValues.name);
+  const [location, setLocation] = React.useState(initialValues.location);
+  const [originalQuantity, setOriginalQuantity] = React.useState(
+    initialValues.originalQuantity
   );
-  const [contractLocation, setContractLocation] = React.useState(
-    initialValues.contractLocation
+  const [contractDate, setContractDate] = React.useState(
+    initialValues.contractDate
   );
-  const [contractBushels, setContractBushels] = React.useState(
-    initialValues.contractBushels
+  const [remainingQuantity, setRemainingQuantity] = React.useState(
+    initialValues.remainingQuantity
   );
-  const [contractDollars, setContractDollars] = React.useState(
-    initialValues.contractDollars
-  );
-  const [remainingBushels, setRemainingBushels] = React.useState(
-    initialValues.remainingBushels
-  );
-  const [remainingDollars, setRemainingDollars] = React.useState(
-    initialValues.remainingDollars
-  );
+  const [netDollars, setNetDollars] = React.useState(initialValues.netDollars);
   const [closedDate, setClosedDate] = React.useState(initialValues.closedDate);
   const [closedBy, setClosedBy] = React.useState(initialValues.closedBy);
-  const [markforReview, setMarkforReview] = React.useState(
-    initialValues.markforReview
-  );
   const [settlementReference, setSettlementReference] = React.useState(
     initialValues.settlementReference
   );
+  const [markforReview, setMarkforReview] = React.useState(
+    initialValues.markforReview
+  );
+  const [locked, setLocked] = React.useState(initialValues.locked);
   const [pictureKey, setPictureKey] = React.useState(initialValues.pictureKey);
   const [addendumKey1, setAddendumKey1] = React.useState(
     initialValues.addendumKey1
@@ -92,6 +90,10 @@ export default function ContractUpdateForm(props) {
   const [duplicateKey, setDuplicateKey] = React.useState(
     initialValues.duplicateKey
   );
+  const [notes, setNotes] = React.useState(initialValues.notes);
+  const [TransactionDates, setTransactionDates] = React.useState(
+    initialValues.TransactionDates
+  );
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     const cleanValues = contractRecord
@@ -99,16 +101,17 @@ export default function ContractUpdateForm(props) {
       : initialValues;
     setContractType(cleanValues.contractType);
     setContractNumber(cleanValues.contractNumber);
-    setContractName(cleanValues.contractName);
-    setContractLocation(cleanValues.contractLocation);
-    setContractBushels(cleanValues.contractBushels);
-    setContractDollars(cleanValues.contractDollars);
-    setRemainingBushels(cleanValues.remainingBushels);
-    setRemainingDollars(cleanValues.remainingDollars);
+    setName(cleanValues.name);
+    setLocation(cleanValues.location);
+    setOriginalQuantity(cleanValues.originalQuantity);
+    setContractDate(cleanValues.contractDate);
+    setRemainingQuantity(cleanValues.remainingQuantity);
+    setNetDollars(cleanValues.netDollars);
     setClosedDate(cleanValues.closedDate);
     setClosedBy(cleanValues.closedBy);
-    setMarkforReview(cleanValues.markforReview);
     setSettlementReference(cleanValues.settlementReference);
+    setMarkforReview(cleanValues.markforReview);
+    setLocked(cleanValues.locked);
     setPictureKey(cleanValues.pictureKey);
     setAddendumKey1(cleanValues.addendumKey1);
     setAddendumKey2(cleanValues.addendumKey2);
@@ -117,6 +120,13 @@ export default function ContractUpdateForm(props) {
         cleanValues.duplicateKey === null
         ? cleanValues.duplicateKey
         : JSON.stringify(cleanValues.duplicateKey)
+    );
+    setNotes(cleanValues.notes);
+    setTransactionDates(
+      typeof cleanValues.TransactionDates === "string" ||
+        cleanValues.TransactionDates === null
+        ? cleanValues.TransactionDates
+        : JSON.stringify(cleanValues.TransactionDates)
     );
     setErrors({});
   };
@@ -139,20 +149,23 @@ export default function ContractUpdateForm(props) {
   const validations = {
     contractType: [{ type: "Required" }],
     contractNumber: [],
-    contractName: [],
-    contractLocation: [],
-    contractBushels: [],
-    contractDollars: [],
-    remainingBushels: [],
-    remainingDollars: [],
+    name: [],
+    location: [],
+    originalQuantity: [],
+    contractDate: [],
+    remainingQuantity: [],
+    netDollars: [],
     closedDate: [],
     closedBy: [],
-    markforReview: [],
     settlementReference: [],
+    markforReview: [],
+    locked: [],
     pictureKey: [],
     addendumKey1: [],
     addendumKey2: [],
     duplicateKey: [{ type: "JSON" }],
+    notes: [],
+    TransactionDates: [{ type: "JSON" }],
   };
   const runValidationTasks = async (
     fieldName,
@@ -182,20 +195,23 @@ export default function ContractUpdateForm(props) {
         let modelFields = {
           contractType,
           contractNumber: contractNumber ?? null,
-          contractName: contractName ?? null,
-          contractLocation: contractLocation ?? null,
-          contractBushels: contractBushels ?? null,
-          contractDollars: contractDollars ?? null,
-          remainingBushels: remainingBushels ?? null,
-          remainingDollars: remainingDollars ?? null,
+          name: name ?? null,
+          location: location ?? null,
+          originalQuantity: originalQuantity ?? null,
+          contractDate: contractDate ?? null,
+          remainingQuantity: remainingQuantity ?? null,
+          netDollars: netDollars ?? null,
           closedDate: closedDate ?? null,
           closedBy: closedBy ?? null,
-          markforReview: markforReview ?? null,
           settlementReference: settlementReference ?? null,
+          markforReview: markforReview ?? null,
+          locked: locked ?? null,
           pictureKey: pictureKey ?? null,
           addendumKey1: addendumKey1 ?? null,
           addendumKey2: addendumKey2 ?? null,
           duplicateKey: duplicateKey ?? null,
+          notes: notes ?? null,
+          TransactionDates: TransactionDates ?? null,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -258,20 +274,23 @@ export default function ContractUpdateForm(props) {
             const modelFields = {
               contractType: value,
               contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
               closedDate,
               closedBy,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
             value = result?.contractType ?? value;
@@ -287,34 +306,44 @@ export default function ContractUpdateForm(props) {
         {...getOverrideProps(overrides, "contractType")}
       >
         <option
+          children="Basis fixed"
+          value="BASIS_FIXED"
+          {...getOverrideProps(overrides, "contractTypeoption0")}
+        ></option>
+        <option
           children="Deferred payment"
           value="DEFERRED_PAYMENT"
-          {...getOverrideProps(overrides, "contractTypeoption0")}
+          {...getOverrideProps(overrides, "contractTypeoption1")}
         ></option>
         <option
           children="Priced later"
           value="PRICED_LATER"
-          {...getOverrideProps(overrides, "contractTypeoption1")}
+          {...getOverrideProps(overrides, "contractTypeoption2")}
         ></option>
         <option
           children="Extended pricing"
           value="EXTENDED_PRICING"
-          {...getOverrideProps(overrides, "contractTypeoption2")}
+          {...getOverrideProps(overrides, "contractTypeoption3")}
         ></option>
         <option
           children="Cash buy"
           value="CASH_BUY"
-          {...getOverrideProps(overrides, "contractTypeoption3")}
+          {...getOverrideProps(overrides, "contractTypeoption4")}
         ></option>
         <option
-          children="Minimum price"
-          value="MINIMUM_PRICE"
-          {...getOverrideProps(overrides, "contractTypeoption4")}
+          children="Minimum priced"
+          value="MINIMUM_PRICED"
+          {...getOverrideProps(overrides, "contractTypeoption5")}
+        ></option>
+        <option
+          children="Hedged to arrive"
+          value="HEDGED_TO_ARRIVE"
+          {...getOverrideProps(overrides, "contractTypeoption6")}
         ></option>
         <option
           children="Unassigned"
           value="UNASSIGNED"
-          {...getOverrideProps(overrides, "contractTypeoption5")}
+          {...getOverrideProps(overrides, "contractTypeoption7")}
         ></option>
       </SelectField>
       <TextField
@@ -328,20 +357,23 @@ export default function ContractUpdateForm(props) {
             const modelFields = {
               contractType,
               contractNumber: value,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
               closedDate,
               closedBy,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
             value = result?.contractNumber ?? value;
@@ -357,129 +389,96 @@ export default function ContractUpdateForm(props) {
         {...getOverrideProps(overrides, "contractNumber")}
       ></TextField>
       <TextField
-        label="Contract name"
+        label="Name"
         isRequired={false}
         isReadOnly={false}
-        value={contractName}
+        value={name}
         onChange={(e) => {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
               contractType,
               contractNumber,
-              contractName: value,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
+              name: value,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
               closedDate,
               closedBy,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
-            value = result?.contractName ?? value;
+            value = result?.name ?? value;
           }
-          if (errors.contractName?.hasError) {
-            runValidationTasks("contractName", value);
+          if (errors.name?.hasError) {
+            runValidationTasks("name", value);
           }
-          setContractName(value);
+          setName(value);
         }}
-        onBlur={() => runValidationTasks("contractName", contractName)}
-        errorMessage={errors.contractName?.errorMessage}
-        hasError={errors.contractName?.hasError}
-        {...getOverrideProps(overrides, "contractName")}
+        onBlur={() => runValidationTasks("name", name)}
+        errorMessage={errors.name?.errorMessage}
+        hasError={errors.name?.hasError}
+        {...getOverrideProps(overrides, "name")}
       ></TextField>
       <TextField
-        label="Contract location"
+        label="Location"
         isRequired={false}
         isReadOnly={false}
-        value={contractLocation}
+        value={location}
         onChange={(e) => {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
               contractType,
               contractNumber,
-              contractName,
-              contractLocation: value,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
+              name,
+              location: value,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
               closedDate,
               closedBy,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
-            value = result?.contractLocation ?? value;
+            value = result?.location ?? value;
           }
-          if (errors.contractLocation?.hasError) {
-            runValidationTasks("contractLocation", value);
+          if (errors.location?.hasError) {
+            runValidationTasks("location", value);
           }
-          setContractLocation(value);
+          setLocation(value);
         }}
-        onBlur={() => runValidationTasks("contractLocation", contractLocation)}
-        errorMessage={errors.contractLocation?.errorMessage}
-        hasError={errors.contractLocation?.hasError}
-        {...getOverrideProps(overrides, "contractLocation")}
+        onBlur={() => runValidationTasks("location", location)}
+        errorMessage={errors.location?.errorMessage}
+        hasError={errors.location?.hasError}
+        {...getOverrideProps(overrides, "location")}
       ></TextField>
       <TextField
-        label="Contract bushels"
-        isRequired={false}
-        isReadOnly={false}
-        value={contractBushels}
-        onChange={(e) => {
-          let { value } = e.target;
-          if (onChange) {
-            const modelFields = {
-              contractType,
-              contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels: value,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
-              closedDate,
-              closedBy,
-              markforReview,
-              settlementReference,
-              pictureKey,
-              addendumKey1,
-              addendumKey2,
-              duplicateKey,
-            };
-            const result = onChange(modelFields);
-            value = result?.contractBushels ?? value;
-          }
-          if (errors.contractBushels?.hasError) {
-            runValidationTasks("contractBushels", value);
-          }
-          setContractBushels(value);
-        }}
-        onBlur={() => runValidationTasks("contractBushels", contractBushels)}
-        errorMessage={errors.contractBushels?.errorMessage}
-        hasError={errors.contractBushels?.hasError}
-        {...getOverrideProps(overrides, "contractBushels")}
-      ></TextField>
-      <TextField
-        label="Contract dollars"
+        label="Original quantity"
         isRequired={false}
         isReadOnly={false}
         type="number"
         step="any"
-        value={contractDollars}
+        value={originalQuantity}
         onChange={(e) => {
           let value = isNaN(parseFloat(e.target.value))
             ? e.target.value
@@ -488,41 +487,87 @@ export default function ContractUpdateForm(props) {
             const modelFields = {
               contractType,
               contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars: value,
-              remainingBushels,
-              remainingDollars,
+              name,
+              location,
+              originalQuantity: value,
+              contractDate,
+              remainingQuantity,
+              netDollars,
               closedDate,
               closedBy,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
-            value = result?.contractDollars ?? value;
+            value = result?.originalQuantity ?? value;
           }
-          if (errors.contractDollars?.hasError) {
-            runValidationTasks("contractDollars", value);
+          if (errors.originalQuantity?.hasError) {
+            runValidationTasks("originalQuantity", value);
           }
-          setContractDollars(value);
+          setOriginalQuantity(value);
         }}
-        onBlur={() => runValidationTasks("contractDollars", contractDollars)}
-        errorMessage={errors.contractDollars?.errorMessage}
-        hasError={errors.contractDollars?.hasError}
-        {...getOverrideProps(overrides, "contractDollars")}
+        onBlur={() => runValidationTasks("originalQuantity", originalQuantity)}
+        errorMessage={errors.originalQuantity?.errorMessage}
+        hasError={errors.originalQuantity?.hasError}
+        {...getOverrideProps(overrides, "originalQuantity")}
       ></TextField>
       <TextField
-        label="Remaining bushels"
+        label="Contract date"
+        isRequired={false}
+        isReadOnly={false}
+        type="date"
+        value={contractDate}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              contractType,
+              contractNumber,
+              name,
+              location,
+              originalQuantity,
+              contractDate: value,
+              remainingQuantity,
+              netDollars,
+              closedDate,
+              closedBy,
+              settlementReference,
+              markforReview,
+              locked,
+              pictureKey,
+              addendumKey1,
+              addendumKey2,
+              duplicateKey,
+              notes,
+              TransactionDates,
+            };
+            const result = onChange(modelFields);
+            value = result?.contractDate ?? value;
+          }
+          if (errors.contractDate?.hasError) {
+            runValidationTasks("contractDate", value);
+          }
+          setContractDate(value);
+        }}
+        onBlur={() => runValidationTasks("contractDate", contractDate)}
+        errorMessage={errors.contractDate?.errorMessage}
+        hasError={errors.contractDate?.hasError}
+        {...getOverrideProps(overrides, "contractDate")}
+      ></TextField>
+      <TextField
+        label="Remaining quantity"
         isRequired={false}
         isReadOnly={false}
         type="number"
         step="any"
-        value={remainingBushels}
+        value={remainingQuantity}
         onChange={(e) => {
           let value = isNaN(parseFloat(e.target.value))
             ? e.target.value
@@ -531,41 +576,46 @@ export default function ContractUpdateForm(props) {
             const modelFields = {
               contractType,
               contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels: value,
-              remainingDollars,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity: value,
+              netDollars,
               closedDate,
               closedBy,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
-            value = result?.remainingBushels ?? value;
+            value = result?.remainingQuantity ?? value;
           }
-          if (errors.remainingBushels?.hasError) {
-            runValidationTasks("remainingBushels", value);
+          if (errors.remainingQuantity?.hasError) {
+            runValidationTasks("remainingQuantity", value);
           }
-          setRemainingBushels(value);
+          setRemainingQuantity(value);
         }}
-        onBlur={() => runValidationTasks("remainingBushels", remainingBushels)}
-        errorMessage={errors.remainingBushels?.errorMessage}
-        hasError={errors.remainingBushels?.hasError}
-        {...getOverrideProps(overrides, "remainingBushels")}
+        onBlur={() =>
+          runValidationTasks("remainingQuantity", remainingQuantity)
+        }
+        errorMessage={errors.remainingQuantity?.errorMessage}
+        hasError={errors.remainingQuantity?.hasError}
+        {...getOverrideProps(overrides, "remainingQuantity")}
       ></TextField>
       <TextField
-        label="Remaining dollars"
+        label="Net dollars"
         isRequired={false}
         isReadOnly={false}
         type="number"
         step="any"
-        value={remainingDollars}
+        value={netDollars}
         onChange={(e) => {
           let value = isNaN(parseFloat(e.target.value))
             ? e.target.value
@@ -574,33 +624,36 @@ export default function ContractUpdateForm(props) {
             const modelFields = {
               contractType,
               contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars: value,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars: value,
               closedDate,
               closedBy,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
-            value = result?.remainingDollars ?? value;
+            value = result?.netDollars ?? value;
           }
-          if (errors.remainingDollars?.hasError) {
-            runValidationTasks("remainingDollars", value);
+          if (errors.netDollars?.hasError) {
+            runValidationTasks("netDollars", value);
           }
-          setRemainingDollars(value);
+          setNetDollars(value);
         }}
-        onBlur={() => runValidationTasks("remainingDollars", remainingDollars)}
-        errorMessage={errors.remainingDollars?.errorMessage}
-        hasError={errors.remainingDollars?.hasError}
-        {...getOverrideProps(overrides, "remainingDollars")}
+        onBlur={() => runValidationTasks("netDollars", netDollars)}
+        errorMessage={errors.netDollars?.errorMessage}
+        hasError={errors.netDollars?.hasError}
+        {...getOverrideProps(overrides, "netDollars")}
       ></TextField>
       <TextField
         label="Closed date"
@@ -614,20 +667,23 @@ export default function ContractUpdateForm(props) {
             const modelFields = {
               contractType,
               contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
               closedDate: value,
               closedBy,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
             value = result?.closedDate ?? value;
@@ -653,20 +709,23 @@ export default function ContractUpdateForm(props) {
             const modelFields = {
               contractType,
               contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
               closedDate,
               closedBy: value,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
             value = result?.closedBy ?? value;
@@ -681,45 +740,6 @@ export default function ContractUpdateForm(props) {
         hasError={errors.closedBy?.hasError}
         {...getOverrideProps(overrides, "closedBy")}
       ></TextField>
-      <SwitchField
-        label="Markfor review"
-        defaultChecked={false}
-        isDisabled={false}
-        isChecked={markforReview}
-        onChange={(e) => {
-          let value = e.target.checked;
-          if (onChange) {
-            const modelFields = {
-              contractType,
-              contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
-              closedDate,
-              closedBy,
-              markforReview: value,
-              settlementReference,
-              pictureKey,
-              addendumKey1,
-              addendumKey2,
-              duplicateKey,
-            };
-            const result = onChange(modelFields);
-            value = result?.markforReview ?? value;
-          }
-          if (errors.markforReview?.hasError) {
-            runValidationTasks("markforReview", value);
-          }
-          setMarkforReview(value);
-        }}
-        onBlur={() => runValidationTasks("markforReview", markforReview)}
-        errorMessage={errors.markforReview?.errorMessage}
-        hasError={errors.markforReview?.hasError}
-        {...getOverrideProps(overrides, "markforReview")}
-      ></SwitchField>
       <TextField
         label="Settlement reference"
         isRequired={false}
@@ -731,20 +751,23 @@ export default function ContractUpdateForm(props) {
             const modelFields = {
               contractType,
               contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
               closedDate,
               closedBy,
-              markforReview,
               settlementReference: value,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
             value = result?.settlementReference ?? value;
@@ -761,6 +784,90 @@ export default function ContractUpdateForm(props) {
         hasError={errors.settlementReference?.hasError}
         {...getOverrideProps(overrides, "settlementReference")}
       ></TextField>
+      <SwitchField
+        label="Markfor review"
+        defaultChecked={false}
+        isDisabled={false}
+        isChecked={markforReview}
+        onChange={(e) => {
+          let value = e.target.checked;
+          if (onChange) {
+            const modelFields = {
+              contractType,
+              contractNumber,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
+              closedDate,
+              closedBy,
+              settlementReference,
+              markforReview: value,
+              locked,
+              pictureKey,
+              addendumKey1,
+              addendumKey2,
+              duplicateKey,
+              notes,
+              TransactionDates,
+            };
+            const result = onChange(modelFields);
+            value = result?.markforReview ?? value;
+          }
+          if (errors.markforReview?.hasError) {
+            runValidationTasks("markforReview", value);
+          }
+          setMarkforReview(value);
+        }}
+        onBlur={() => runValidationTasks("markforReview", markforReview)}
+        errorMessage={errors.markforReview?.errorMessage}
+        hasError={errors.markforReview?.hasError}
+        {...getOverrideProps(overrides, "markforReview")}
+      ></SwitchField>
+      <SwitchField
+        label="Locked"
+        defaultChecked={false}
+        isDisabled={false}
+        isChecked={locked}
+        onChange={(e) => {
+          let value = e.target.checked;
+          if (onChange) {
+            const modelFields = {
+              contractType,
+              contractNumber,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
+              closedDate,
+              closedBy,
+              settlementReference,
+              markforReview,
+              locked: value,
+              pictureKey,
+              addendumKey1,
+              addendumKey2,
+              duplicateKey,
+              notes,
+              TransactionDates,
+            };
+            const result = onChange(modelFields);
+            value = result?.locked ?? value;
+          }
+          if (errors.locked?.hasError) {
+            runValidationTasks("locked", value);
+          }
+          setLocked(value);
+        }}
+        onBlur={() => runValidationTasks("locked", locked)}
+        errorMessage={errors.locked?.errorMessage}
+        hasError={errors.locked?.hasError}
+        {...getOverrideProps(overrides, "locked")}
+      ></SwitchField>
       <TextField
         label="Picture key"
         isRequired={false}
@@ -772,20 +879,23 @@ export default function ContractUpdateForm(props) {
             const modelFields = {
               contractType,
               contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
               closedDate,
               closedBy,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey: value,
               addendumKey1,
               addendumKey2,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
             value = result?.pictureKey ?? value;
@@ -811,20 +921,23 @@ export default function ContractUpdateForm(props) {
             const modelFields = {
               contractType,
               contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
               closedDate,
               closedBy,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1: value,
               addendumKey2,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
             value = result?.addendumKey1 ?? value;
@@ -850,20 +963,23 @@ export default function ContractUpdateForm(props) {
             const modelFields = {
               contractType,
               contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
               closedDate,
               closedBy,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1,
               addendumKey2: value,
               duplicateKey,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
             value = result?.addendumKey2 ?? value;
@@ -889,20 +1005,23 @@ export default function ContractUpdateForm(props) {
             const modelFields = {
               contractType,
               contractNumber,
-              contractName,
-              contractLocation,
-              contractBushels,
-              contractDollars,
-              remainingBushels,
-              remainingDollars,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
               closedDate,
               closedBy,
-              markforReview,
               settlementReference,
+              markforReview,
+              locked,
               pictureKey,
               addendumKey1,
               addendumKey2,
               duplicateKey: value,
+              notes,
+              TransactionDates,
             };
             const result = onChange(modelFields);
             value = result?.duplicateKey ?? value;
@@ -916,6 +1035,90 @@ export default function ContractUpdateForm(props) {
         errorMessage={errors.duplicateKey?.errorMessage}
         hasError={errors.duplicateKey?.hasError}
         {...getOverrideProps(overrides, "duplicateKey")}
+      ></TextAreaField>
+      <TextField
+        label="Notes"
+        isRequired={false}
+        isReadOnly={false}
+        value={notes}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              contractType,
+              contractNumber,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
+              closedDate,
+              closedBy,
+              settlementReference,
+              markforReview,
+              locked,
+              pictureKey,
+              addendumKey1,
+              addendumKey2,
+              duplicateKey,
+              notes: value,
+              TransactionDates,
+            };
+            const result = onChange(modelFields);
+            value = result?.notes ?? value;
+          }
+          if (errors.notes?.hasError) {
+            runValidationTasks("notes", value);
+          }
+          setNotes(value);
+        }}
+        onBlur={() => runValidationTasks("notes", notes)}
+        errorMessage={errors.notes?.errorMessage}
+        hasError={errors.notes?.hasError}
+        {...getOverrideProps(overrides, "notes")}
+      ></TextField>
+      <TextAreaField
+        label="Transaction dates"
+        isRequired={false}
+        isReadOnly={false}
+        value={TransactionDates}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              contractType,
+              contractNumber,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
+              closedDate,
+              closedBy,
+              settlementReference,
+              markforReview,
+              locked,
+              pictureKey,
+              addendumKey1,
+              addendumKey2,
+              duplicateKey,
+              notes,
+              TransactionDates: value,
+            };
+            const result = onChange(modelFields);
+            value = result?.TransactionDates ?? value;
+          }
+          if (errors.TransactionDates?.hasError) {
+            runValidationTasks("TransactionDates", value);
+          }
+          setTransactionDates(value);
+        }}
+        onBlur={() => runValidationTasks("TransactionDates", TransactionDates)}
+        errorMessage={errors.TransactionDates?.errorMessage}
+        hasError={errors.TransactionDates?.hasError}
+        {...getOverrideProps(overrides, "TransactionDates")}
       ></TextAreaField>
       <Flex
         justifyContent="space-between"

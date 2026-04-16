@@ -1,60 +1,6 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
-export const createTransactionDate = /* GraphQL */ `
-  mutation CreateTransactionDate(
-    $input: CreateTransactionDateInput!
-    $condition: ModelTransactionDateConditionInput
-  ) {
-    createTransactionDate(input: $input, condition: $condition) {
-      id
-      date
-      JSON
-      remainingBushels
-      remainingDollars
-      contractID
-      createdAt
-      updatedAt
-      __typename
-    }
-  }
-`;
-export const updateTransactionDate = /* GraphQL */ `
-  mutation UpdateTransactionDate(
-    $input: UpdateTransactionDateInput!
-    $condition: ModelTransactionDateConditionInput
-  ) {
-    updateTransactionDate(input: $input, condition: $condition) {
-      id
-      date
-      JSON
-      remainingBushels
-      remainingDollars
-      contractID
-      createdAt
-      updatedAt
-      __typename
-    }
-  }
-`;
-export const deleteTransactionDate = /* GraphQL */ `
-  mutation DeleteTransactionDate(
-    $input: DeleteTransactionDateInput!
-    $condition: ModelTransactionDateConditionInput
-  ) {
-    deleteTransactionDate(input: $input, condition: $condition) {
-      id
-      date
-      JSON
-      remainingBushels
-      remainingDollars
-      contractID
-      createdAt
-      updatedAt
-      __typename
-    }
-  }
-`;
 export const createContract = /* GraphQL */ `
   mutation CreateContract(
     $input: CreateContractInput!
@@ -64,24 +10,23 @@ export const createContract = /* GraphQL */ `
       id
       contractType
       contractNumber
-      contractName
-      contractLocation
-      contractBushels
-      contractDollars
-      remainingBushels
-      remainingDollars
+      name
+      location
+      originalQuantity
+      contractDate
+      remainingQuantity
+      netDollars
       closedDate
       closedBy
-      markforReview
       settlementReference
+      markforReview
+      locked
       pictureKey
       addendumKey1
       addendumKey2
       duplicateKey
-      TransactionDates {
-        nextToken
-        __typename
-      }
+      notes
+      TransactionDates
       createdAt
       updatedAt
       __typename
@@ -97,24 +42,23 @@ export const updateContract = /* GraphQL */ `
       id
       contractType
       contractNumber
-      contractName
-      contractLocation
-      contractBushels
-      contractDollars
-      remainingBushels
-      remainingDollars
+      name
+      location
+      originalQuantity
+      contractDate
+      remainingQuantity
+      netDollars
       closedDate
       closedBy
-      markforReview
       settlementReference
+      markforReview
+      locked
       pictureKey
       addendumKey1
       addendumKey2
       duplicateKey
-      TransactionDates {
-        nextToken
-        __typename
-      }
+      notes
+      TransactionDates
       createdAt
       updatedAt
       __typename
@@ -130,24 +74,23 @@ export const deleteContract = /* GraphQL */ `
       id
       contractType
       contractNumber
-      contractName
-      contractLocation
-      contractBushels
-      contractDollars
-      remainingBushels
-      remainingDollars
+      name
+      location
+      originalQuantity
+      contractDate
+      remainingQuantity
+      netDollars
       closedDate
       closedBy
-      markforReview
       settlementReference
+      markforReview
+      locked
       pictureKey
       addendumKey1
       addendumKey2
       duplicateKey
-      TransactionDates {
-        nextToken
-        __typename
-      }
+      notes
+      TransactionDates
       createdAt
       updatedAt
       __typename

@@ -7,22 +7,8 @@
         "Subscription"
       ]
     },
-    "auth": {
-      "contractmanager2": [
-        "create",
-        "read",
-        "update",
-        "delete"
-      ]
-    },
     "storage": {
       "s3contractmanager2storage87f59124": [
-        "create",
-        "read",
-        "update",
-        "delete"
-      ],
-      "Contract:@model(appsync)": [
         "create",
         "read",
         "update",
