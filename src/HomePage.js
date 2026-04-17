@@ -225,20 +225,43 @@ export default function HomePage({ user, signOut }) {
         <table style={{ width: "100%", marginTop: 10 }}>
           <tbody>
             {viewFiltered.map(c => (
-              <tr
-                key={c.id}
-                onClick={() => {
-                  const pdfs = c.media.filter(m => m.type === "pdf");
-                  if (pdfs.length) {
-                    setActiveContractMedia({ pdfs, activeIndex: 0 });
-                  }
-                }}
-                style={{ cursor: "pointer", background: "#111" }}
-              >
-                <td>{c.contractNumber}</td>
-                <td>{c.contractType}</td>
-                <td>{c.contractSigned ? "✔" : "✖"}</td>
-              </tr>
+              
+<tr
+  key={c.id}
+  onClick={() => {
+    const pdfs = c.media.filter(m => m.type === "pdf");
+    if (pdfs.length) {
+      setActiveContractMedia({ pdfs, activeIndex: 0 });
+    }
+  }}
+  style={{
+    cursor: "pointer",
+    backgroundColor: "#111",
+    borderLeft: "4px solid #1f6feb",
+  }}
+>
+  <td>{c.contractNumber}</td>
+  <td>{c.contractType}</td>
+
+  {/* ✅ RESTORED DOCS COLUMN */}
+  <td>
+    {c.media.map((m, i) => (
+      <button
+        key={i}
+        onClick={e => {
+          e.stopPropagation(); // ✅ prevent row click
+          setActiveMedia(m);   // ✅ single‑PDF viewer
+        }}
+      >
+        {m.type}
+      </button>
+    ))}
+  </td>
+
+  <td>{c.contractSigned ? "✔" : "✖"}</td>
+  <td>{c.closedDate ?? ""}</td>
+</tr>
+
             ))}
           </tbody>
         </table>
