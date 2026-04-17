@@ -15,6 +15,7 @@ export default function HomePage({ user, signOut }) {
   ========================= */
   const [contracts, setContracts] = useState([]);
   const [filtered, setFiltered] = useState([]);
+
   const [activeView, setActiveView] = useState("contracts");
 
   const [statusFilter, setStatusFilter] = useState("open");
@@ -24,11 +25,11 @@ export default function HomePage({ user, signOut }) {
 
   const [activeMedia, setActiveMedia] = useState(null);
 
-  // ✅ SINGLE VIEWER STATE
+  // ✅ carries ALL pdfs, one iframe
   const [activeContractMedia, setActiveContractMedia] = useState(null);
   /*
     {
-      items: [{ url, type, label }],
+      pdfs: [{ url, type }],
       activeIndex: number
     }
   */
@@ -36,6 +37,7 @@ export default function HomePage({ user, signOut }) {
   const [showUploadContract, setShowUploadContract] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadPreviewUrl, setUploadPreviewUrl] = useState(null);
+
   const [uploadContractNumber, setUploadContractNumber] = useState("");
   const [uploadContractType, setUploadContractType] = useState("");
   const [uploadPdfType, setUploadPdfType] = useState("contract");
@@ -73,18 +75,15 @@ export default function HomePage({ user, signOut }) {
           c.addendumKey1,
           c.addendumKey2,
           c.duplicateKey,
-        ]
-          .map(parseKey)
-          .filter(Boolean);
+        ].map(parseKey).filter(Boolean);
 
         const media = await Promise.all(
           keys.map(async key => {
             const { url } = await getUrl({ path: key });
+            const u = url.toString();
             return {
-              url: url.toString(),
-              type: url.toString().toLowerCase().endsWith(".pdf")
-                ? "pdf"
-                : "image",
+              url: u,
+              type: u.toLowerCase().includes(".pdf") ? "pdf" : "image",
             };
           })
         );
@@ -98,7 +97,7 @@ export default function HomePage({ user, signOut }) {
   }
 
   /* =========================
-     GLOBAL FILTERS
+     FILTERS
   ========================= */
   useEffect(() => {
     let data = [...contracts];
@@ -125,6 +124,20 @@ export default function HomePage({ user, signOut }) {
   }, [contracts, statusFilter, signedFilter, contractType, search]);
 
   /* =========================
+     ESC CLOSE
+  ========================= */
+  useEffect(() => {
+    const onKey = e => {
+      if (e.key === "Escape") {
+        setActiveMedia(null);
+        setActiveContractMedia(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  /* =========================
      VIEW FILTER
   ========================= */
   const viewFiltered = filtered.filter(c => {
@@ -133,6 +146,41 @@ export default function HomePage({ user, signOut }) {
     return true;
   });
 
+  const contractTypes = [
+    "ALL",
+    ...new Set(contracts.map(c => c.contractType).filter(Boolean)),
+  ];
+
+  /* =========================
+     UPLOAD
+  ========================= */
+  async function handleUploadContract() {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const uploadKey = `uploads/contracts/${timestamp}.pdf`;
+
+    const uploadResult = await uploadData({
+      path: uploadKey,
+      data: uploadFile,
+      options: { contentType: "application/pdf", accessLevel: "public" },
+    }).result;
+
+    await post({
+      apiName: "contractsAPI",
+      path: "/submitEditedContract",
+      options: {
+        body: {
+          sourceKey: uploadResult.path,
+          contractNumber: uploadContractNumber,
+          contractType: uploadContractType,
+          pdfType: uploadPdfType,
+        },
+      },
+    });
+
+    setShowUploadContract(false);
+    fetchContracts();
+  }
+
   /* =========================
      RENDER
   ========================= */
@@ -140,7 +188,7 @@ export default function HomePage({ user, signOut }) {
     <div style={{ padding: 20, color: "white" }}>
       {/* HEADER */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", gap: 15 }}>
+        <div style={{ display: "flex", gap: 15, alignItems: "center" }}>
           <img src={logo} alt="Logo" style={{ width: 120 }} />
           <h2>Contracts Dashboard</h2>
         </div>
@@ -154,60 +202,37 @@ export default function HomePage({ user, signOut }) {
             key={v}
             onClick={() => setActiveView(v)}
             style={{
-              padding: 12,
+              minWidth: 180,
+              padding: "12px 18px",
               background: activeView === v ? "#1f6feb" : "#2a2a2a",
+              color: "white",
+              borderRadius: 6,
             }}
           >
-            {v.toUpperCase()}
+            {v}
           </button>
         ))}
       </div>
 
       {activeView === "bulk" && <BulkUploadPage />}
 
+      {/* TABLE */}
       {activeView !== "bulk" && (
-        <table width="100%" style={{ marginTop: 20 }}>
-          <thead>
-            <tr>
-              <th>Contract #</th>
-              <th>Type</th>
-              <th>Docs</th>
-              <th>Signed</th>
-            </tr>
-          </thead>
+        <table style={{ width: "100%", marginTop: 20 }}>
           <tbody>
             {viewFiltered.map(c => (
               <tr
                 key={c.id}
-                style={{ cursor: "pointer" }}
                 onClick={() => {
-                  const items = [];
-
-                  const contractPdf = c.media.find(
-                    m => m.type === "pdf" && m.url.includes("contract")
-                  );
-
-                  const transactionPdf = c.media.find(
-                    m => m.type === "pdf" && m.url.includes("transaction")
-                  );
-
-                  if (contractPdf)
-                    items.push({ ...contractPdf, label: "Contract" });
-
-                  if (transactionPdf)
-                    items.push({ ...transactionPdf, label: "Transaction" });
-
-                  if (items.length) {
-                    setActiveContractMedia({
-                      items,
-                      activeIndex: 0,
-                    });
+                  const pdfs = c.media.filter(m => m.type === "pdf");
+                  if (pdfs.length) {
+                    setActiveContractMedia({ pdfs, activeIndex: 0 });
                   }
                 }}
+                style={{ cursor: "pointer", background: "#111" }}
               >
                 <td>{c.contractNumber}</td>
                 <td>{c.contractType}</td>
-                <td>{c.media.length}</td>
                 <td>{c.contractSigned ? "✔" : "✖"}</td>
               </tr>
             ))}
@@ -215,61 +240,30 @@ export default function HomePage({ user, signOut }) {
         </table>
       )}
 
-      {/* ✅ SINGLE DOCUMENT VIEWER */}
+      {/* ✅ SINGLE IFRAME — ALL PDFs */}
       {activeContractMedia && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "#000",
-            zIndex: 1000,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              padding: 10,
-              background: "#111",
-            }}
-          >
-            <div style={{ display: "flex", gap: 10 }}>
-              {activeContractMedia.items.map((item, idx) => (
-                <button
-                  key={idx}
-                  onClick={() =>
-                    setActiveContractMedia(prev => ({
-                      ...prev,
-                      activeIndex: idx,
-                    }))
-                  }
-                  style={{
-                    background:
-                      idx === activeContractMedia.activeIndex
-                        ? "#1f6feb"
-                        : "#333",
-                    padding: "6px 12px",
-                    color: "white",
-                  }}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
+        <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 1000 }}>
+          <button onClick={() => setActiveContractMedia(null)}>Close</button>
 
-            <button onClick={() => setActiveContractMedia(null)}>✕</button>
+          <div style={{ display: "flex", gap: 8, padding: 8 }}>
+            {activeContractMedia.pdfs.map((p, idx) => (
+              <button
+                key={idx}
+                onClick={() =>
+                  setActiveContractMedia(prev => ({
+                    ...prev,
+                    activeIndex: idx,
+                  }))
+                }
+              >
+                PDF {idx + 1}
+              </button>
+            ))}
           </div>
 
           <iframe
-            title="Document Viewer"
-            src={
-              activeContractMedia.items[
-                activeContractMedia.activeIndex
-              ].url
-            }
-            style={{ flex: 1, width: "100%", border: "none" }}
+            src={activeContractMedia.pdfs[activeContractMedia.activeIndex].url}
+            style={{ width: "100%", height: "100%" }}
           />
         </div>
       )}
