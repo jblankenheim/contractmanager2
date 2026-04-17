@@ -7,6 +7,14 @@
         "Subscription"
       ]
     },
+    "function": {
+      "transactionPDFGen": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    },
     "storage": {
       "s3contractmanager2storage87f59124": [
         "create",

@@ -31,6 +31,10 @@
     "storages3contractmanager2storage87f59124BucketName": {
       "Type": "String",
       "Default": "storages3contractmanager2storage87f59124BucketName"
+    },
+    "functiontransactionPDFGenName": {
+      "Type": "String",
+      "Default": "functiontransactionPDFGenName"
     }
   },
   "Conditions": {
@@ -123,6 +127,9 @@
                   }
                 ]
               ]
+            },
+            "FUNCTION_TRANSACTIONPDFGEN_NAME": {
+              "Ref": "functiontransactionPDFGenName"
             }
           }
         },
@@ -297,6 +304,41 @@
                         "Ref": "apicontractmanager2GraphQLAPIIdOutput"
                       },
                       "/types/Subscription/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "lambda:Create*",
+                "lambda:Put*",
+                "lambda:Add*",
+                "lambda:Get*",
+                "lambda:List*",
+                "lambda:Invoke*",
+                "lambda:Update*",
+                "lambda:Delete*",
+                "lambda:Remove*"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:lambda:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":function:",
+                      {
+                        "Ref": "functiontransactionPDFGenName"
+                      }
                     ]
                   ]
                 }

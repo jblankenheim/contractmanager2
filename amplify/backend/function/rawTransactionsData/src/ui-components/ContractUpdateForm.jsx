@@ -48,7 +48,6 @@ export default function ContractUpdateForm(props) {
     locked: false,
     pictureKey: "",
     transactionKey: "",
-    needsTransactionKey: false,
     addendumKey1: "",
     addendumKey2: "",
     duplicateKey: "",
@@ -86,9 +85,6 @@ export default function ContractUpdateForm(props) {
   const [transactionKey, setTransactionKey] = React.useState(
     initialValues.transactionKey
   );
-  const [needsTransactionKey, setNeedsTransactionKey] = React.useState(
-    initialValues.needsTransactionKey
-  );
   const [addendumKey1, setAddendumKey1] = React.useState(
     initialValues.addendumKey1
   );
@@ -122,7 +118,6 @@ export default function ContractUpdateForm(props) {
     setLocked(cleanValues.locked);
     setPictureKey(cleanValues.pictureKey);
     setTransactionKey(cleanValues.transactionKey);
-    setNeedsTransactionKey(cleanValues.needsTransactionKey);
     setAddendumKey1(cleanValues.addendumKey1);
     setAddendumKey2(cleanValues.addendumKey2);
     setDuplicateKey(
@@ -172,7 +167,6 @@ export default function ContractUpdateForm(props) {
     locked: [],
     pictureKey: [],
     transactionKey: [],
-    needsTransactionKey: [],
     addendumKey1: [],
     addendumKey2: [],
     duplicateKey: [{ type: "JSON" }],
@@ -220,7 +214,6 @@ export default function ContractUpdateForm(props) {
           locked: locked ?? null,
           pictureKey: pictureKey ?? null,
           transactionKey: transactionKey ?? null,
-          needsTransactionKey: needsTransactionKey ?? null,
           addendumKey1: addendumKey1 ?? null,
           addendumKey2: addendumKey2 ?? null,
           duplicateKey: duplicateKey ?? null,
@@ -301,7 +294,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -386,7 +378,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -430,7 +421,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -474,7 +464,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -522,7 +511,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -567,7 +555,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -615,7 +602,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -665,7 +651,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -710,7 +695,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -754,7 +738,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -798,7 +781,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -844,7 +826,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -888,7 +869,6 @@ export default function ContractUpdateForm(props) {
               locked: value,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -932,7 +912,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey: value,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -976,7 +955,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey: value,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -996,52 +974,6 @@ export default function ContractUpdateForm(props) {
         hasError={errors.transactionKey?.hasError}
         {...getOverrideProps(overrides, "transactionKey")}
       ></TextField>
-      <SwitchField
-        label="Needs transaction key"
-        defaultChecked={false}
-        isDisabled={false}
-        isChecked={needsTransactionKey}
-        onChange={(e) => {
-          let value = e.target.checked;
-          if (onChange) {
-            const modelFields = {
-              contractType,
-              contractNumber,
-              name,
-              location,
-              originalQuantity,
-              contractDate,
-              remainingQuantity,
-              netDollars,
-              closedDate,
-              closedBy,
-              settlementReference,
-              markforReview,
-              locked,
-              pictureKey,
-              transactionKey,
-              needsTransactionKey: value,
-              addendumKey1,
-              addendumKey2,
-              duplicateKey,
-              notes,
-              TransactionDates,
-            };
-            const result = onChange(modelFields);
-            value = result?.needsTransactionKey ?? value;
-          }
-          if (errors.needsTransactionKey?.hasError) {
-            runValidationTasks("needsTransactionKey", value);
-          }
-          setNeedsTransactionKey(value);
-        }}
-        onBlur={() =>
-          runValidationTasks("needsTransactionKey", needsTransactionKey)
-        }
-        errorMessage={errors.needsTransactionKey?.errorMessage}
-        hasError={errors.needsTransactionKey?.hasError}
-        {...getOverrideProps(overrides, "needsTransactionKey")}
-      ></SwitchField>
       <TextField
         label="Addendum key1"
         isRequired={false}
@@ -1066,7 +998,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1: value,
               addendumKey2,
               duplicateKey,
@@ -1110,7 +1041,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2: value,
               duplicateKey,
@@ -1154,7 +1084,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey: value,
@@ -1198,7 +1127,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -1242,7 +1170,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,

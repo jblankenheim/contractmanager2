@@ -1,170 +1,193 @@
-/* Amplify Params - DO NOT EDIT ... */
+const { parse } = require("csv-parse/sync");
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, BatchGetCommand, PutCommand, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
+const { LambdaClient, InvokeCommand } = require("@aws-sdk/client-lambda");
 
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
-
-const s3Client = new S3Client({});
-const ddbClient = new DynamoDBClient({});
-const dynamodb = DynamoDBDocumentClient.from(ddbClient);
+const s3 = new S3Client({});
+const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const lambda = new LambdaClient({});
 
 const TABLE_NAME = process.env.API_CONTRACTMANAGER2_CONTRACTTABLE_NAME;
 const BUCKET = process.env.STORAGE_S3CONTRACTMANAGER2STORAGE87F59124_BUCKETNAME;
 
-// Updated to include all fields you mentioned
-const ALLOWED_FIELDS = [
-  'contractType', 'contractNumber', 'commodity', 'name', 
-  'location', 'contractDate', 'originalQuantity', 'remainingQuantity', 
-  'netDollars'
-];
-
-let validationErrors = [];
-let closedContracts = new Set();
-
+/* ========================= ENTRY POINT ========================= */
 exports.handler = async (event) => {
-  validationErrors = [];
-  closedContracts = new Set();
+    const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+    const fileKey = body.file;
 
-  try {
-    const body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
-    let fileKey = body.file;
+    if (!fileKey) return response(400, { message: "Missing S3 file key" });
 
-    if (!fileKey) return response(400, { message: 'No S3 file path provided' });
-
-    const csvData = await loadS3File(fileKey);
-    const rows = parseCsv(csvData);
+    const csv = await loadS3(fileKey);
     
-    if (rows.length === 0) {
-        return response(400, { message: "CSV file appears empty or formatted incorrectly." });
+    // Updated parser options to handle messy quoting and whitespace
+    const rawRows = parse(csv, { 
+        columns: true, 
+        skip_empty_lines: true, 
+        trim: true,
+        relax_quotes: true,     // Handles quotes in middle of fields
+        relax_column_count: true // Prevents crashing if commas shift columns
+    });
+
+    const contracts = new Map();
+    const skippedRows = []; 
+
+    for (const raw of rawRows) {
+        const row = normalizeRow(raw);
+
+        // STOPS THE CRASH: Skips row if data shifted and keys are missing
+        if (!row.contractType || !row.contractNumber) {
+            skippedRows.push({
+                name: raw.name || "Unknown", 
+                type: row.contractType,
+                number: row.contractNumber,
+                reason: "Missing Key (Likely due to unquoted comma shift)"
+            });
+            continue;
+        }
+
+        const id = `${row.contractType}_${row.contractNumber}`;
+        if (!contracts.has(id)) {
+            contracts.set(id, {
+                contractType: row.contractType,
+                contractNumber: row.contractNumber,
+                location: row.location,
+                transactions: [],
+            });
+        }
+        contracts.get(id).transactions.push(row.transaction);
     }
 
-    for (const row of rows) {
-      await upsertContract(row, fileKey);
+    if (contracts.size === 0) {
+        return response(200, { message: "No valid rows found", skippedCount: skippedRows.length, skippedRows });
+    }
+
+    const existingItems = await batchGetContracts([...contracts.keys()]);
+    const existingMap = new Map(existingItems.map((item) => [item.id, item]));
+
+    await pMap([...contracts.entries()], ([id, contract]) => processContract(id, contract, existingMap.get(id)));
+
+    try {
+        await lambda.send(new InvokeCommand({
+            FunctionName: "transactionPDFGen-dev",
+            InvocationType: "Event",
+            Payload: JSON.stringify({ contractIds: [...contracts.keys()] }),
+        }));
+    } catch (err) {
+        console.error("PDF Trigger failed:", err);
     }
 
     return response(200, {
-      message: `Successfully processed ${rows.length} rows.`,
-      closedContracts: Array.from(closedContracts),
-      errors: validationErrors.length > 0 ? validationErrors : undefined
+        message: `Processed ${contracts.size} contracts.`,
+        skippedCount: skippedRows.length,
+        skippedRows 
     });
-
-  } catch (err) {
-    console.error('TOP LEVEL ERROR:', err);
-    return response(500, { message: 'Internal server error', error: err.message });
-  }
 };
 
-async function loadS3File(key) {
-  const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
-  const obj = await s3Client.send(command);
-  let str = await obj.Body.transformToString();
-  
-  // Clean up "Wingdings"/BOM (Byte Order Mark) at the start of the file
-  return str.replace(/^\uFEFF/, '');
+/* ========================= NORMALIZE ========================= */
+function normalizeRow(row) {
+    return {
+        // Fallback to null so our truthy check catches empty strings
+        contractType: row.contractType?.trim() || null,
+        contractNumber: (row.contractNumber || row.conractNumber)?.trim() || null,
+        location: row.location,
+        transaction: {
+            date: normalizeDate(row.date),
+            quantity: toNumber(row.quantity),
+            dollars: toNumber(row.netDollars),
+            checkNumber: row.checkNumber,
+        },
+    };
 }
 
-function parseCsv(data) {
-  // Handle different line endings and filter out empty lines
-  const lines = data.split(/\r?\n/).filter(line => line.trim() !== "");
-  if (lines.length < 2) return [];
+/* ========================= HELPERS ========================= */
+async function loadS3(key) {
+    const obj = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
+    const text = await obj.Body.transformToString();
+    return text.replace(/^\uFEFF/, ""); // Removes BOM if present
+}
 
-  // Get headers from the first row and trim whitespace/invisible chars
-  const headers = lines.shift().split(',').map(h => h.trim().replace(/['"]+/g, ''));
-  console.log('Dynamic Headers Mapping:', headers);
+function normalizeDate(v) {
+    if (!v) return null;
+    const clean = String(v).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+    const parts = clean.split("/");
+    if (parts.length === 3) {
+        const [m, d, y] = parts;
+        return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    }
+    return null;
+}
 
-  return lines.map((line, index) => {
-    // Simple split by comma. Note: If your data has commas inside quotes, we'll need a regex split.
-    const values = line.split(',').map(v => v.trim().replace(/['"]+/g, ''));
-    const obj = { __rowNumber: index + 2 };
+function toNumber(val) {
+    if (!val) return 0;
+    const n = Number(String(val).replace(/[^0-9.-]+/g, ""));
+    return isNaN(n) ? 0 : n;
+}
 
-    headers.forEach((header, i) => {
-      // Map every value to its corresponding header name
-      if (header && values[i] !== undefined) {
-        obj[header] = values[i];
-      }
+async function batchGetContracts(ids) {
+    if (!ids.length) return [];
+    const results = [];
+    for (let i = 0; i < ids.length; i += 100) {
+        const chunk = ids.slice(i, i + 100);
+        const result = await ddb.send(new BatchGetCommand({ 
+            RequestItems: { [TABLE_NAME]: { Keys: chunk.map(id => ({ id })) } } 
+        }));
+        results.push(...(result.Responses?.[TABLE_NAME] ?? []));
+    }
+    return results;
+}
+
+async function processContract(id, contract, existingItem) {
+    const originalQuantity = existingItem?.originalQuantity ?? 0;
+    const now = new Date().toISOString();
+    const sorted = contract.transactions.filter(t => t.date).sort((a, b) => a.date.localeCompare(b.date));
+
+    let remaining = originalQuantity;
+    const enriched = sorted.map(t => {
+        remaining -= t.quantity;
+        return { ...t, remainingQuantity: remaining, contractId: id };
     });
-    return obj;
-  });
-}
 
-async function upsertContract(row, fileKey) {
-  const { contractType, contractNumber } = row;
+    const finalRemaining = enriched.length > 0 ? enriched[enriched.length - 1].remainingQuantity : originalQuantity;
 
-  if (!contractType || !contractNumber) {
-    validationErrors.push({ row: row.__rowNumber, error: 'Missing contractType or contractNumber' });
-    return;
-  }
+    const common = {
+        transactionDates: enriched,
+        remainingQuantity: finalRemaining,
+        location: contract.location,
+        updatedAt: now,
+        needsTransactionKey: true 
+    };
 
-  const id = `${contractType}_${contractNumber}`;
-  
-  const existing = await dynamodb.send(new GetCommand({
-    TableName: TABLE_NAME,
-    Key: { id }
-  }));
-
-  if (existing.Item?.closedDate || existing.Item?.closedBy) {
-    closedContracts.add(id);
-    return;
-  }
-
-  if (existing.Item) {
-    await updateContract(id, row);
-  } else {
-    await createContract(id, row);
-  }
-}
-
-async function createContract(id, row) {
-  const item = { id };
-  ALLOWED_FIELDS.forEach(field => {
-    if (row[field] !== undefined && row[field] !== '') {
-      item[field] = castValue(field, row[field]);
+    if (!existingItem) {
+        await ddb.send(new PutCommand({
+            TableName: TABLE_NAME,
+            Item: { id, contractType: contract.contractType, contractNumber: contract.contractNumber, originalQuantity, createdAt: now, ...common },
+        }));
+    } else {
+        await ddb.send(new UpdateCommand({
+            TableName: TABLE_NAME,
+            Key: { id },
+            UpdateExpression: `SET transactionDates = :t, remainingQuantity = :r, #loc = :l, updatedAt = :u, needsTransactionKey = :n`,
+            ExpressionAttributeNames: { "#loc": "location" },
+            ExpressionAttributeValues: { ":t": common.transactionDates, ":r": common.remainingQuantity, ":l": common.location, ":u": common.updatedAt, ":n": true },
+        }));
     }
-  });
-  
-  await dynamodb.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
 }
 
-async function updateContract(id, row) {
-  let updateExp = 'SET ';
-  const attrNames = {};
-  const attrValues = {};
-  let hasUpdates = false;
-
-  ALLOWED_FIELDS.forEach(field => {
-    if (row[field] !== undefined && row[field] !== '') {
-      updateExp += `#${field} = :${field}, `;
-      attrNames[`#${field}`] = field;
-      attrValues[`:${field}`] = castValue(field, row[field]);
-      hasUpdates = true;
+async function pMap(items, fn, { concurrency = 25 } = {}) {
+    const results = [];
+    let index = 0;
+    async function worker() {
+        while (index < items.length) {
+            const i = index++;
+            results[i] = await fn(items[i], i);
+        }
     }
-  });
-
-  if (!hasUpdates) return;
-  updateExp = updateExp.slice(0, -2);
-
-  await dynamodb.send(new UpdateCommand({
-    TableName: TABLE_NAME,
-    Key: { id },
-    UpdateExpression: updateExp,
-    ExpressionAttributeNames: attrNames,
-    ExpressionAttributeValues: attrValues
-  }));
-}
-
-function castValue(field, value) {
-  // Convert these specific fields to numbers for DynamoDB
-  if (['originalQuantity', 'remainingQuantity', 'netDollars'].includes(field)) {
-    const num = Number(value.replace(/[^0-9.-]+/g, "")); // Strip currency symbols or commas
-    return isNaN(num) ? 0 : num;
-  }
-  return value;
+    await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
+    return results;
 }
 
 function response(statusCode, body) {
-  return {
-    statusCode,
-    headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*' },
-    body: JSON.stringify(body)
-  };
+    return { statusCode, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" }, body: JSON.stringify(body) };
 }

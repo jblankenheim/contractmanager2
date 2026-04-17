@@ -37,6 +37,7 @@ export declare type ContractCreateFormInputValues = {
     locked?: boolean;
     pictureKey?: string;
     transactionKey?: string;
+    needsTransactionKey?: boolean;
     addendumKey1?: string;
     addendumKey2?: string;
     duplicateKey?: string;
@@ -59,6 +60,7 @@ export declare type ContractCreateFormValidationValues = {
     locked?: ValidationFunction<boolean>;
     pictureKey?: ValidationFunction<string>;
     transactionKey?: ValidationFunction<string>;
+    needsTransactionKey?: ValidationFunction<boolean>;
     addendumKey1?: ValidationFunction<string>;
     addendumKey2?: ValidationFunction<string>;
     duplicateKey?: ValidationFunction<string>;
@@ -83,6 +85,7 @@ export declare type ContractCreateFormOverridesProps = {
     locked?: PrimitiveOverrideProps<SwitchFieldProps>;
     pictureKey?: PrimitiveOverrideProps<TextFieldProps>;
     transactionKey?: PrimitiveOverrideProps<TextFieldProps>;
+    needsTransactionKey?: PrimitiveOverrideProps<SwitchFieldProps>;
     addendumKey1?: PrimitiveOverrideProps<TextFieldProps>;
     addendumKey2?: PrimitiveOverrideProps<TextFieldProps>;
     duplicateKey?: PrimitiveOverrideProps<TextAreaFieldProps>;

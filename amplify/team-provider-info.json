@@ -27,7 +27,7 @@
         "submitEditedContract": {},
         "submitEditedContractLambda": {
           "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
-          "s3Key": "amplify-builds/submitEditedContractLambda-544c3874626e30433745-build.zip"
+          "s3Key": "amplify-builds/submitEditedContractLambda-4e5059726779716f4847-build.zip"
         },
         "S3Trigger6c4edd56": {
           "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
@@ -36,15 +36,15 @@
         "transactionsRawData": {},
         "rawContractData": {
           "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
-          "s3Key": "amplify-builds/rawContractData-4c7a6637754669667135-build.zip"
+          "s3Key": "amplify-builds/rawContractData-732b76783757516f5965-build.zip"
         },
         "rawTransactionsData": {
           "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
-          "s3Key": "amplify-builds/rawTransactionsData-775a56673944744c5364-build.zip"
+          "s3Key": "amplify-builds/rawTransactionsData-592f50726e656e5a7548-build.zip"
         },
         "transactionPDFGen": {
           "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
-          "s3Key": "amplify-builds/transactionPDFGen-6f366c70424374773346-build.zip"
+          "s3Key": "amplify-builds/transactionPDFGen-446d4f785a46387a4475-build.zip"
         }
       }
     }

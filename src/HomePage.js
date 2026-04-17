@@ -3,9 +3,9 @@ import { generateClient } from "aws-amplify/api";
 import { getUrl } from "aws-amplify/storage";
 import { listContracts } from "./graphql/queries";
 import BulkUploadPage from "./Bulkuploadpage";
+import { post } from "aws-amplify/api";
 
 import { uploadData } from "aws-amplify/storage";
-import { submitContractPdf } from "./contractsAPI
 
 import logo from "./assets/CFE_Logo.png";
 
@@ -27,14 +27,14 @@ export default function HomePage({ user, signOut }) {
 
   const [activeMedia, setActiveMedia] = useState(null);
   const [activeContractMedia, setActiveContractMedia] = useState(null);
-  
-const [showUploadContract, setShowUploadContract] = useState(false);
-const [uploadFile, setUploadFile] = useState(null);
-const [uploadPreviewUrl, setUploadPreviewUrl] = useState(null);
 
-const [uploadContractNumber, setUploadContractNumber] = useState("");
-const [uploadContractType, setUploadContractType] = useState("");
-const [uploadPdfType, setUploadPdfType] = useState("contract");
+  const [showUploadContract, setShowUploadContract] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadPreviewUrl, setUploadPreviewUrl] = useState(null);
+
+  const [uploadContractNumber, setUploadContractNumber] = useState("");
+  const [uploadContractType, setUploadContractType] = useState("");
+  const [uploadPdfType, setUploadPdfType] = useState("contract");
 
 
   /* =========================
@@ -158,53 +158,64 @@ const [uploadPdfType, setUploadPdfType] = useState("contract");
   /* =========================
      RENDER
   ========================= */
- async function handleUploadContract() {
-  try {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const uploadKey = `uploads/contracts/${timestamp}.pdf`;
+  async function handleUploadContract() {
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const uploadKey = `uploads/contracts/${timestamp}.pdf`;
 
-    // 1️⃣ Upload temp file to S3
-    const uploadResult = await uploadData({
-      path: uploadKey,
-      data: uploadFile,
-      options: {
-        contentType: "application/pdf",
-        accessLevel: "public",
-      },
-    }).result;
+      // 1️⃣ Upload temp file to S3
+      const uploadResult = await uploadData({
+        path: uploadKey,
+        data: uploadFile,
+        options: {
+          contentType: "application/pdf",
+          accessLevel: "public",
+        },
+      }).result;
 
-    const sourceKey = uploadResult.path;
+      const sourceKey = uploadResult.path;
 
-    // 2️⃣ Submit to contracts API
-    const res = await fetch("/contractsAPI/submitEditedContract", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sourceKey,
-        contractNumber: uploadContractNumber,
-        contractType: uploadContractType,
-        pdfType: uploadPdfType,
-      }),
-    });
+      // 2️⃣ Send to API
+      const response = await post({
+        apiName: "contractsAPI",
+        path: "/submitEditedContract",
+        options: {
+          body: {
+            sourceKey,
+            contractNumber: uploadContractNumber,
+            contractType: uploadContractType,
+            pdfType: uploadPdfType,
+          },
+        },
+      });
 
-    if (!res.ok) {
-      throw new Error(await res.text());
+      console.log("Upload success:", response);
+
+      // 3️⃣ Reset UI
+      setShowUploadContract(false);
+      setUploadFile(null);
+      setUploadPreviewUrl(null);
+      setUploadContractNumber("");
+      setUploadContractType("");
+      setUploadPdfType("contract");
+
+      fetchContracts();
+
+    } catch (err) {
+      console.error("Upload failed FULL:", err);
+      alert("Upload failed");
     }
-
-    // 3️⃣ Reset + refresh
-    setShowUploadContract(false);
-    setUploadFile(null);
-    setUploadPreviewUrl(null);
-    setUploadContractNumber("");
-    setUploadContractType("");
-    setUploadPdfType("contract");
-
-    fetchContracts();
-  } catch (err) {
-    console.error("Upload failed:", err);
-    alert("Upload failed. Please try again.");
   }
-}
+  const CONTRACT_TYPE_OPTIONS = [
+    "BASIS_FIXED",
+    "DEFERRED_PAYMENT",
+    "PRICED_LATER",
+    "EXTENDED_PRICING",
+    "CASH_BUY",
+    "MINIMUM_PRICED",
+    "HEDGED_TO_ARRIVE",
+    "UNASSIGNED",
+  ];
 
   return (
     <div style={{ padding: 20, color: "white" }}>
@@ -274,23 +285,32 @@ const [uploadPdfType, setUploadPdfType] = useState("contract");
             />
           </div>
 
-<div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-  <button
-    onClick={() => setShowUploadContract(true)}
-    style={{
-      padding: "10px 16px",
-      background: "#238636",
-      color: "white",
-      borderRadius: 6,
-      fontWeight: "bold",
-    }}
-  >
-    Upload Contract
-  </button>
-</div>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+            <button
+              onClick={() => setShowUploadContract(true)}
+              style={{
+                padding: "10px 16px",
+                background: "#238636",
+                color: "white",
+                borderRadius: 6,
+                fontWeight: "bold",
+              }}
+            >
+              Upload Contract
+            </button>
+          </div>
 
           {/* TABLE */}
-          <table style={{ width: "100%", marginTop: 20 }}>
+          <table style={{
+            width: "100%", 
+            marginTop: 20, 
+            width: "100%",
+            marginTop: 20,
+            borderCollapse: "separate",
+            borderSpacing: "0 6px", 
+            borderRadius: 8,
+            overflow: "hidden",
+          }}>
             <thead>
               <tr>
                 <th>Contract #</th>
@@ -304,13 +324,26 @@ const [uploadPdfType, setUploadPdfType] = useState("contract");
               {viewFiltered.map(c => (
                 <tr
                   key={c.id}
-                  style={{ cursor: "pointer" }}
                   onClick={() => {
                     const contractPdf = c.media.find(m => m.type === "pdf");
                     const transactionPdf = c.media.find(m =>
                       m.url.includes("transaction")
                     );
                     setActiveContractMedia({ contractPdf, transactionPdf });
+                  }}
+                  style={{
+                    cursor: "pointer",
+                    backgroundColor: "#111", // default dark row
+                    borderLeft: "4px solid #1f6feb",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.backgroundColor = "#1a1a1a";
+                  }}
+                  onMouseLeave={e => {
+                    const index = viewFiltered.findIndex(x => x.id === c.id);
+                    e.currentTarget.style.backgroundColor =
+                      index % 2 === 0 ? "#111" : "#1b1b1b";
                   }}
                 >
                   <td>{c.contractNumber}</td>
@@ -356,117 +389,115 @@ const [uploadPdfType, setUploadPdfType] = useState("contract");
           )}
         </div>
       )}
-        
-{showUploadContract && (
-  <div
-    style={{
-      position: "fixed",
-      inset: 0,
-      background: "#000",
-      zIndex: 2000,
-      padding: 20,
-      display: "flex",
-      flexDirection: "column",
-      gap: 20,
-    }}
-  >
-    {/* HEADER */}
-    <div style={{ display: "flex", justifyContent: "space-between" }}>
-      <h2>Upload Contract</h2>
-      <button onClick={() => {
-        setShowUploadContract(false);
-        setUploadFile(null);
-        setUploadPreviewUrl(null);
-        setUploadContractNumber("");
-        setUploadContractType("");
-        setUploadPdfType("contract");
-      }}>
-        ✕ Close
-      </button>
-    </div>
 
-    {/* FORM */}
-    <div style={{ display: "flex", gap: 12 }}>
-      <input
-        placeholder="Contract Number"
-        value={uploadContractNumber}
-        onChange={e => setUploadContractNumber(e.target.value)}
-      />
+      {showUploadContract && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "#000",
+            zIndex: 2000,
+            padding: 20,
+            display: "flex",
+            flexDirection: "column",
+            gap: 20,
+          }}
+        >
+          {/* HEADER */}
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <h2>Upload Contract</h2>
+            <button onClick={() => {
+              setShowUploadContract(false);
+              setUploadFile(null);
+              setUploadPreviewUrl(null);
+              setUploadContractNumber("");
+              setUploadContractType("");
+              setUploadPdfType("contract");
+            }}>
+              ✕ Close
+            </button>
+          </div>
 
-      <select
-        value={uploadContractType}
-        onChange={e => setUploadContractType(e.target.value)}
-      >
-        <option value="">Select Contract Type</option>
-        {contractTypes
-          .filter(t => t !== "ALL")
-          .map(t => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-      </select>
+          {/* FORM */}
+          <div style={{ display: "flex", gap: 12 }}>
+            <input
+              placeholder="Contract Number"
+              value={uploadContractNumber}
+              onChange={e => setUploadContractNumber(e.target.value)}
+            />
 
-      <select
-        value={uploadPdfType}
-        onChange={e => setUploadPdfType(e.target.value)}
-      >
-        <option value="contract">Contract</option>
-        <option value="addendum">Addendum</option>
-      </select>
+            <select
+              value={uploadContractType}
+              onChange={e => setUploadContractType(e.target.value)}
+            >
+              <option value="">Select Contract Type</option>
+              {CONTRACT_TYPE_OPTIONS.map(t => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
 
-      <input
-        type="file"
-        accept="application/pdf"
-        onChange={e => {
-          const file = e.target.files[0];
-          if (!file) return;
+            <select
+              value={uploadPdfType}
+              onChange={e => setUploadPdfType(e.target.value)}
+            >
+              <option value="contract">Contract</option>
+              <option value="addendum">Addendum</option>
+            </select>
 
-          setUploadFile(file);
-          setUploadPreviewUrl(URL.createObjectURL(file));
-        }}
-      />
-    </div>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={e => {
+                const file = e.target.files[0];
+                if (!file) return;
 
-    {/* PREVIEW */}
-    <div style={{ flex: 1, border: "1px solid #333" }}>
-      {uploadPreviewUrl ? (
-        <iframe
-          src={uploadPreviewUrl}
-          style={{ width: "100%", height: "100%" }}
-        />
-      ) : (
-        <div style={{ padding: 40, color: "#888" }}>
-          Select a PDF to preview
+                setUploadFile(file);
+                setUploadPreviewUrl(URL.createObjectURL(file));
+              }}
+            />
+          </div>
+
+          {/* PREVIEW */}
+          <div style={{ flex: 1, border: "1px solid #333" }}>
+            {uploadPreviewUrl ? (
+              <iframe
+                src={uploadPreviewUrl}
+                style={{ width: "100%", height: "100%" }}
+              />
+            ) : (
+              <div style={{ padding: 40, color: "#888" }}>
+                Select a PDF to preview
+              </div>
+            )}
+          </div>
+
+          {/* ACTION BAR */}
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+            <button onClick={() => setShowUploadContract(false)}>Cancel</button>
+
+            <button
+              style={{
+                background: "#1f6feb",
+                color: "white",
+                padding: "10px 18px",
+                borderRadius: 6,
+                fontWeight: "bold",
+              }}
+              onClick={handleUploadContract}
+              disabled={
+                !uploadFile ||
+                !uploadContractNumber ||
+                !uploadContractType
+              }
+            >
+              Upload
+            </button>
+
+          </div>
         </div>
       )}
-    </div>
-
-    {/* ACTION BAR */}
-    <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
-      <button onClick={() => setShowUploadContract(false)}>Cancel</button>
-
-     <button
-  style={{
-    background: "#1f6feb",
-    color: "white",
-    padding: "10px 18px",
-    borderRadius: 6,
-    fontWeight: "bold",
-  }}
-  onClick={handleUploadContract}
-  disabled={
-    !uploadFile ||
-    !uploadContractNumber ||
-    !uploadContractType
-  }
->
-  Upload
-</button>
-
-    </div>
-  </div>
-)}
 
     </div>
   );

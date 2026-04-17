@@ -127,6 +127,13 @@
         },
         {
           "attributes": [
+            "Name"
+          ],
+          "category": "function",
+          "resourceName": "transactionPDFGen"
+        },
+        {
+          "attributes": [
             "BucketName"
           ],
           "category": "storage",

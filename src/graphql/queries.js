@@ -20,6 +20,7 @@ export const getContract = /* GraphQL */ `
       locked
       pictureKey
       transactionKey
+      needsTransactionKey
       addendumKey1
       addendumKey2
       duplicateKey
@@ -55,6 +56,7 @@ export const listContracts = /* GraphQL */ `
         locked
         pictureKey
         transactionKey
+        needsTransactionKey
         addendumKey1
         addendumKey2
         duplicateKey
@@ -101,6 +103,7 @@ export const contractsByType = /* GraphQL */ `
         locked
         pictureKey
         transactionKey
+        needsTransactionKey
         addendumKey1
         addendumKey2
         duplicateKey
@@ -147,6 +150,7 @@ export const contractsByNumber = /* GraphQL */ `
         locked
         pictureKey
         transactionKey
+        needsTransactionKey
         addendumKey1
         addendumKey2
         duplicateKey
@@ -193,6 +197,7 @@ export const contractsByName = /* GraphQL */ `
         locked
         pictureKey
         transactionKey
+        needsTransactionKey
         addendumKey1
         addendumKey2
         duplicateKey

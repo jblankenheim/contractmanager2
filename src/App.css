@@ -48,6 +48,11 @@
   body > * { display: none; }
   .print-target { display: block !important; }
 }
+html, body, #root {
+  min-height: 100%;
+  margin: 0;
+  background-color: #000;
+}
 :root {
   /* Backgrounds */
   --color-bg-primary: #000000;     /* Main background */

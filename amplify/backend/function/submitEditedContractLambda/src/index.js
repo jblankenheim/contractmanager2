@@ -1,12 +1,3 @@
-/* Amplify Params - DO NOT EDIT
-	API_CONTRACTMANAGER2_CONTRACTTABLE_ARN
-	API_CONTRACTMANAGER2_CONTRACTTABLE_NAME
-	API_CONTRACTMANAGER2_GRAPHQLAPIENDPOINTOUTPUT
-	API_CONTRACTMANAGER2_GRAPHQLAPIIDOUTPUT
-	API_CONTRACTMANAGER2_GRAPHQLAPIKEYOUTPUT
-	AUTH_CONTRACTMANAGER2_USERPOOLID
-	STORAGE_S3CONTRACTMANAGER2STORAGE87F59124_BUCKETNAME
-Amplify Params - DO NOT EDIT */
 const {
   S3Client,
   CopyObjectCommand,
@@ -24,83 +15,84 @@ const {
 const s3 = new S3Client({});
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
-// ---- ENV VARS ----
 const TABLE_NAME = process.env.TABLE_NAME?.trim();
 const BUCKET = process.env.CONTRACT_BUCKET?.trim();
 
 if (!TABLE_NAME || !BUCKET) {
-  throw new Error("Missing TABLE_NAME or CONTRACT_BUCKET environment variables");
+  throw new Error("Missing TABLE_NAME or CONTRACT_BUCKET env vars");
 }
 
-// ---- CORS ----
+// --------------------
+// VALIDATION
+// --------------------
+const ALLOWED_CONTRACT_TYPES = new Set([
+  "BASIS_FIXED",
+  "DEFERRED_PAYMENT",
+  "PRICED_LATER",
+  "EXTENDED_PRICING",
+  "CASH_BUY",
+  "MINIMUM_PRICED",
+  "HEDGED_TO_ARRIVE",
+  "UNASSIGNED",
+]);
+
+function isValidString(v) {
+  return typeof v === "string" && v.trim().length > 0;
+}
+
 const headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "*",
   "Content-Type": "application/json",
 };
 
+function badRequest(msg) {
+  return {
+    statusCode: 400,
+    headers,
+    body: JSON.stringify({ error: msg }),
+  };
+}
+
+// --------------------
+// HANDLER
+// --------------------
 exports.handler = async (event) => {
   try {
-    const body = JSON.parse(event.body || "{}");
+    const body =
+      typeof event.body === "string"
+        ? JSON.parse(event.body)
+        : event.body || {};
 
-    const {
-      sourceKey,
-      contractType,
-      contractNumber,
-      pdfType = "contract",
-    } = body;
+    const { sourceKey, contractType, contractNumber, pdfType = "contract" } =
+      body;
 
-    if (!sourceKey || !contractType || contractNumber === undefined) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: "Missing required fields" }),
-      };
+    // --------------------
+    // VALIDATION
+    // --------------------
+    if (!isValidString(sourceKey)) return badRequest("sourceKey required");
+    if (!isValidString(contractType)) return badRequest("contractType required");
+    if (!ALLOWED_CONTRACT_TYPES.has(contractType)) {
+      return badRequest(`Invalid contractType: ${contractType}`);
     }
+    if (!isValidString(contractNumber)) return badRequest("contractNumber required");
 
-    // ---- ✅ NORMALIZE CONTRACT NUMBER AS NUMBER ----
-    const contractNumberStr = String(contractNumber).trim();
-
-    if (!contractNumberStr) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: "contractNumber is required",
-        }),
-      };
-    }
-
+    const contractNumberStr = contractNumber.trim();
     const contractId = `${contractType}_${contractNumberStr}`;
-    const sourceKeyFull = sourceKey;
+    const now = new Date().toISOString();
 
     const destinationKey =
       `public/contracts/${contractType}/${contractNumberStr}.pdf`;
 
-    console.log("Processing contract submission:", {
+    console.log("Processing:", {
       contractId,
-      sourceKey: sourceKeyFull,
+      sourceKey,
       destinationKey,
     });
 
-    // --------------------------------------------------
-    // 1️⃣ COPY CONTRACT (CRITICAL STEP)
-    // --------------------------------------------------
-    await s3.send(
-      new CopyObjectCommand({
-        Bucket: BUCKET,
-        CopySource: `${BUCKET}/${sourceKeyFull}`, // do NOT encode
-        Key: destinationKey,
-      })
-    );
-
-    console.log("S3 copy completed");
-
-    // --------------------------------------------------
-    // 2️⃣ WRITE / UPDATE DYNAMODB (SOURCE OF TRUTH)
-    // --------------------------------------------------
-    const now = new Date().toISOString();
-
+    // --------------------
+    // FETCH EXISTING ITEM
+    // --------------------
     const existing = await ddb.send(
       new GetCommand({
         TableName: TABLE_NAME,
@@ -108,18 +100,78 @@ exports.handler = async (event) => {
       })
     );
 
+    // =========================================================
+    // 🔒 LOCKED CONTRACT → ONLY MOVE TO DUPLICATES, NO DDB TOUCH
+    // =========================================================
+    if (existing.Item?.locked === true) {
+      const lockedPath =
+        `public/duplicates/${contractId}/${now}.pdf`;
+
+      console.log("LOCKED → moving to duplicates:", lockedPath);
+
+      await s3.send(
+        new CopyObjectCommand({
+          Bucket: BUCKET,
+          CopySource: `${BUCKET}/${sourceKey}`,
+          Key: lockedPath,
+        })
+      );
+
+      await s3.send(
+        new DeleteObjectCommand({
+          Bucket: BUCKET,
+          Key: sourceKey,
+        })
+      );
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          locked: true,
+          message: "Contract is locked — file stored as duplicate only",
+          duplicatePath: lockedPath,
+        }),
+      };
+    }
+
+    // =========================================================
+    // NORMAL FLOW (NOT LOCKED)
+    // =========================================================
+
+    // 1. move file into canonical location
+    await s3.send(
+      new CopyObjectCommand({
+        Bucket: BUCKET,
+        CopySource: `${BUCKET}/${sourceKey}`,
+        Key: destinationKey,
+      })
+    );
+
+    // 2. remove temp upload
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: BUCKET,
+        Key: sourceKey,
+      })
+    );
+
     let resultItem;
 
+    // --------------------
+    // CREATE
+    // --------------------
     if (!existing.Item) {
-      // ✅ New contract — store pdfKey as pictureKey (string)
       resultItem = {
         id: contractId,
         contractType,
         contractNumber: contractNumberStr,
-        pictureKey: destinationKey,   // ← string, not array
         pdfType,
+        pictureKey: destinationKey,
         signed: true,
         createdAt: now,
+        updatedAt: now,
       };
 
       await ddb.send(
@@ -129,11 +181,15 @@ exports.handler = async (event) => {
         })
       );
 
-      console.log("DynamoDB item created");
+      console.log("Created contract");
+    }
 
-    } else {
-      // ✅ Duplicate — move to duplicates folder, append to duplicateKey
-      const duplicatePath = `public/duplicates/${contractId}/${Date.now()}.pdf`;
+    // --------------------
+    // UPDATE
+    // --------------------
+    else {
+      const duplicatePath =
+        `public/duplicates/${contractId}/${Date.now()}.pdf`;
 
       await s3.send(
         new CopyObjectCommand({
@@ -150,65 +206,48 @@ exports.handler = async (event) => {
         })
       );
 
-      console.log("Duplicate moved to:", duplicatePath);
-
       const updated = await ddb.send(
         new UpdateCommand({
           TableName: TABLE_NAME,
           Key: { id: contractId },
           UpdateExpression: `
-        SET
-          pdfType = :t,
-          contractNumber = :n,
-          signed = :s,
-          updatedAt = :u,
-          duplicateKey = list_append(if_not_exists(duplicateKey, :emptyList), :newDuplicate)
-      `,
+            SET
+              pdfType = :t,
+              contractNumber = :n,
+              signed = :s,
+              updatedAt = :u,
+              duplicateKey = list_append(if_not_exists(duplicateKey, :empty), :d)
+          `,
           ExpressionAttributeValues: {
             ":t": pdfType,
             ":n": contractNumberStr,
             ":s": true,
             ":u": now,
-            ":newDuplicate": [duplicatePath],
-            ":emptyList": [],
+            ":d": [duplicatePath],
+            ":empty": [],
           },
           ReturnValues: "ALL_NEW",
         })
       );
 
       resultItem = updated.Attributes;
-      console.log("DynamoDB item updated with duplicate");
+
+      console.log("Updated contract");
     }
 
-    // --------------------------------------------------
-    // 3️⃣ DELETE SOURCE FILE (BEST‑EFFORT CLEANUP)
-    // --------------------------------------------------
-    try {
-      await s3.send(
-        new DeleteObjectCommand({
-          Bucket: BUCKET,
-          Key: sourceKeyFull,
-        })
-      );
-      console.log("Source object deleted");
-    } catch (err) {
-      if (err.name !== "NoSuchKey") {
-        console.warn("Non‑fatal S3 cleanup error:", err);
-      } else {
-        console.log("Source object already deleted (safe)");
-      }
-    }
-
-    // --------------------------------------------------
-    // ✅ SUCCESS
-    // --------------------------------------------------
+    // --------------------
+    // RESPONSE
+    // --------------------
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(resultItem),
+      body: JSON.stringify({
+        success: true,
+        item: resultItem,
+      }),
     };
   } catch (err) {
-    console.error("UNHANDLED ERROR:", err);
+    console.error("ERROR:", err);
 
     return {
       statusCode: 500,
@@ -219,4 +258,4 @@ exports.handler = async (event) => {
       }),
     };
   }
-}
+};

@@ -21,7 +21,7 @@ export declare type ValidationResponse = {
     errorMessage?: string;
 };
 export declare type ValidationFunction<T> = (value: T, validationResponse: ValidationResponse) => ValidationResponse | Promise<ValidationResponse>;
-export declare type ContractUpdateFormInputValues = {
+export declare type ContractCreateFormInputValues = {
     contractType?: string;
     contractNumber?: string;
     name?: string;
@@ -37,14 +37,13 @@ export declare type ContractUpdateFormInputValues = {
     locked?: boolean;
     pictureKey?: string;
     transactionKey?: string;
-    needsTransactionKey?: boolean;
     addendumKey1?: string;
     addendumKey2?: string;
     duplicateKey?: string;
     notes?: string;
     TransactionDates?: string;
 };
-export declare type ContractUpdateFormValidationValues = {
+export declare type ContractCreateFormValidationValues = {
     contractType?: ValidationFunction<string>;
     contractNumber?: ValidationFunction<string>;
     name?: ValidationFunction<string>;
@@ -60,7 +59,6 @@ export declare type ContractUpdateFormValidationValues = {
     locked?: ValidationFunction<boolean>;
     pictureKey?: ValidationFunction<string>;
     transactionKey?: ValidationFunction<string>;
-    needsTransactionKey?: ValidationFunction<boolean>;
     addendumKey1?: ValidationFunction<string>;
     addendumKey2?: ValidationFunction<string>;
     duplicateKey?: ValidationFunction<string>;
@@ -68,8 +66,8 @@ export declare type ContractUpdateFormValidationValues = {
     TransactionDates?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
-export declare type ContractUpdateFormOverridesProps = {
-    ContractUpdateFormGrid?: PrimitiveOverrideProps<GridProps>;
+export declare type ContractCreateFormOverridesProps = {
+    ContractCreateFormGrid?: PrimitiveOverrideProps<GridProps>;
     contractType?: PrimitiveOverrideProps<SelectFieldProps>;
     contractNumber?: PrimitiveOverrideProps<TextFieldProps>;
     name?: PrimitiveOverrideProps<TextFieldProps>;
@@ -85,22 +83,20 @@ export declare type ContractUpdateFormOverridesProps = {
     locked?: PrimitiveOverrideProps<SwitchFieldProps>;
     pictureKey?: PrimitiveOverrideProps<TextFieldProps>;
     transactionKey?: PrimitiveOverrideProps<TextFieldProps>;
-    needsTransactionKey?: PrimitiveOverrideProps<SwitchFieldProps>;
     addendumKey1?: PrimitiveOverrideProps<TextFieldProps>;
     addendumKey2?: PrimitiveOverrideProps<TextFieldProps>;
     duplicateKey?: PrimitiveOverrideProps<TextAreaFieldProps>;
     notes?: PrimitiveOverrideProps<TextFieldProps>;
     TransactionDates?: PrimitiveOverrideProps<TextAreaFieldProps>;
 } & EscapeHatchProps;
-export declare type ContractUpdateFormProps = React.PropsWithChildren<{
-    overrides?: ContractUpdateFormOverridesProps | undefined | null;
+export declare type ContractCreateFormProps = React.PropsWithChildren<{
+    overrides?: ContractCreateFormOverridesProps | undefined | null;
 } & {
-    id?: string;
-    contract?: any;
-    onSubmit?: (fields: ContractUpdateFormInputValues) => ContractUpdateFormInputValues;
-    onSuccess?: (fields: ContractUpdateFormInputValues) => void;
-    onError?: (fields: ContractUpdateFormInputValues, errorMessage: string) => void;
-    onChange?: (fields: ContractUpdateFormInputValues) => ContractUpdateFormInputValues;
-    onValidate?: ContractUpdateFormValidationValues;
+    clearOnSuccess?: boolean;
+    onSubmit?: (fields: ContractCreateFormInputValues) => ContractCreateFormInputValues;
+    onSuccess?: (fields: ContractCreateFormInputValues) => void;
+    onError?: (fields: ContractCreateFormInputValues, errorMessage: string) => void;
+    onChange?: (fields: ContractCreateFormInputValues) => ContractCreateFormInputValues;
+    onValidate?: ContractCreateFormValidationValues;
 } & React.CSSProperties>;
-export default function ContractUpdateForm(props: ContractUpdateFormProps): React.ReactElement;
+export default function ContractCreateForm(props: ContractCreateFormProps): React.ReactElement;

@@ -17,13 +17,11 @@ import {
 } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import { getContract } from "../graphql/queries";
-import { updateContract } from "../graphql/mutations";
+import { createContract } from "../graphql/mutations";
 const client = generateClient();
-export default function ContractUpdateForm(props) {
+export default function ContractCreateForm(props) {
   const {
-    id: idProp,
-    contract: contractModelProp,
+    clearOnSuccess = true,
     onSuccess,
     onError,
     onSubmit,
@@ -48,7 +46,6 @@ export default function ContractUpdateForm(props) {
     locked: false,
     pictureKey: "",
     transactionKey: "",
-    needsTransactionKey: false,
     addendumKey1: "",
     addendumKey2: "",
     duplicateKey: "",
@@ -86,9 +83,6 @@ export default function ContractUpdateForm(props) {
   const [transactionKey, setTransactionKey] = React.useState(
     initialValues.transactionKey
   );
-  const [needsTransactionKey, setNeedsTransactionKey] = React.useState(
-    initialValues.needsTransactionKey
-  );
   const [addendumKey1, setAddendumKey1] = React.useState(
     initialValues.addendumKey1
   );
@@ -104,58 +98,28 @@ export default function ContractUpdateForm(props) {
   );
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
-    const cleanValues = contractRecord
-      ? { ...initialValues, ...contractRecord }
-      : initialValues;
-    setContractType(cleanValues.contractType);
-    setContractNumber(cleanValues.contractNumber);
-    setName(cleanValues.name);
-    setLocation(cleanValues.location);
-    setOriginalQuantity(cleanValues.originalQuantity);
-    setContractDate(cleanValues.contractDate);
-    setRemainingQuantity(cleanValues.remainingQuantity);
-    setNetDollars(cleanValues.netDollars);
-    setClosedDate(cleanValues.closedDate);
-    setClosedBy(cleanValues.closedBy);
-    setSettlementReference(cleanValues.settlementReference);
-    setMarkforReview(cleanValues.markforReview);
-    setLocked(cleanValues.locked);
-    setPictureKey(cleanValues.pictureKey);
-    setTransactionKey(cleanValues.transactionKey);
-    setNeedsTransactionKey(cleanValues.needsTransactionKey);
-    setAddendumKey1(cleanValues.addendumKey1);
-    setAddendumKey2(cleanValues.addendumKey2);
-    setDuplicateKey(
-      typeof cleanValues.duplicateKey === "string" ||
-        cleanValues.duplicateKey === null
-        ? cleanValues.duplicateKey
-        : JSON.stringify(cleanValues.duplicateKey)
-    );
-    setNotes(cleanValues.notes);
-    setTransactionDates(
-      typeof cleanValues.TransactionDates === "string" ||
-        cleanValues.TransactionDates === null
-        ? cleanValues.TransactionDates
-        : JSON.stringify(cleanValues.TransactionDates)
-    );
+    setContractType(initialValues.contractType);
+    setContractNumber(initialValues.contractNumber);
+    setName(initialValues.name);
+    setLocation(initialValues.location);
+    setOriginalQuantity(initialValues.originalQuantity);
+    setContractDate(initialValues.contractDate);
+    setRemainingQuantity(initialValues.remainingQuantity);
+    setNetDollars(initialValues.netDollars);
+    setClosedDate(initialValues.closedDate);
+    setClosedBy(initialValues.closedBy);
+    setSettlementReference(initialValues.settlementReference);
+    setMarkforReview(initialValues.markforReview);
+    setLocked(initialValues.locked);
+    setPictureKey(initialValues.pictureKey);
+    setTransactionKey(initialValues.transactionKey);
+    setAddendumKey1(initialValues.addendumKey1);
+    setAddendumKey2(initialValues.addendumKey2);
+    setDuplicateKey(initialValues.duplicateKey);
+    setNotes(initialValues.notes);
+    setTransactionDates(initialValues.TransactionDates);
     setErrors({});
   };
-  const [contractRecord, setContractRecord] = React.useState(contractModelProp);
-  React.useEffect(() => {
-    const queryData = async () => {
-      const record = idProp
-        ? (
-            await client.graphql({
-              query: getContract.replaceAll("__typename", ""),
-              variables: { id: idProp },
-            })
-          )?.data?.getContract
-        : contractModelProp;
-      setContractRecord(record);
-    };
-    queryData();
-  }, [idProp, contractModelProp]);
-  React.useEffect(resetStateValues, [contractRecord]);
   const validations = {
     contractType: [{ type: "Required" }],
     contractNumber: [],
@@ -172,7 +136,6 @@ export default function ContractUpdateForm(props) {
     locked: [],
     pictureKey: [],
     transactionKey: [],
-    needsTransactionKey: [],
     addendumKey1: [],
     addendumKey2: [],
     duplicateKey: [{ type: "JSON" }],
@@ -206,26 +169,25 @@ export default function ContractUpdateForm(props) {
         event.preventDefault();
         let modelFields = {
           contractType,
-          contractNumber: contractNumber ?? null,
-          name: name ?? null,
-          location: location ?? null,
-          originalQuantity: originalQuantity ?? null,
-          contractDate: contractDate ?? null,
-          remainingQuantity: remainingQuantity ?? null,
-          netDollars: netDollars ?? null,
-          closedDate: closedDate ?? null,
-          closedBy: closedBy ?? null,
-          settlementReference: settlementReference ?? null,
-          markforReview: markforReview ?? null,
-          locked: locked ?? null,
-          pictureKey: pictureKey ?? null,
-          transactionKey: transactionKey ?? null,
-          needsTransactionKey: needsTransactionKey ?? null,
-          addendumKey1: addendumKey1 ?? null,
-          addendumKey2: addendumKey2 ?? null,
-          duplicateKey: duplicateKey ?? null,
-          notes: notes ?? null,
-          TransactionDates: TransactionDates ?? null,
+          contractNumber,
+          name,
+          location,
+          originalQuantity,
+          contractDate,
+          remainingQuantity,
+          netDollars,
+          closedDate,
+          closedBy,
+          settlementReference,
+          markforReview,
+          locked,
+          pictureKey,
+          transactionKey,
+          addendumKey1,
+          addendumKey2,
+          duplicateKey,
+          notes,
+          TransactionDates,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -256,16 +218,18 @@ export default function ContractUpdateForm(props) {
             }
           });
           await client.graphql({
-            query: updateContract.replaceAll("__typename", ""),
+            query: createContract.replaceAll("__typename", ""),
             variables: {
               input: {
-                id: contractRecord.id,
                 ...modelFields,
               },
             },
           });
           if (onSuccess) {
             onSuccess(modelFields);
+          }
+          if (clearOnSuccess) {
+            resetStateValues();
           }
         } catch (err) {
           if (onError) {
@@ -274,7 +238,7 @@ export default function ContractUpdateForm(props) {
           }
         }
       }}
-      {...getOverrideProps(overrides, "ContractUpdateForm")}
+      {...getOverrideProps(overrides, "ContractCreateForm")}
       {...rest}
     >
       <SelectField
@@ -301,7 +265,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -386,7 +349,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -430,7 +392,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -474,7 +435,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -522,7 +482,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -567,7 +526,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -615,7 +573,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -665,7 +622,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -710,7 +666,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -754,7 +709,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -798,7 +752,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -844,7 +797,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -888,7 +840,6 @@ export default function ContractUpdateForm(props) {
               locked: value,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -932,7 +883,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey: value,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -976,7 +926,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey: value,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -996,52 +945,6 @@ export default function ContractUpdateForm(props) {
         hasError={errors.transactionKey?.hasError}
         {...getOverrideProps(overrides, "transactionKey")}
       ></TextField>
-      <SwitchField
-        label="Needs transaction key"
-        defaultChecked={false}
-        isDisabled={false}
-        isChecked={needsTransactionKey}
-        onChange={(e) => {
-          let value = e.target.checked;
-          if (onChange) {
-            const modelFields = {
-              contractType,
-              contractNumber,
-              name,
-              location,
-              originalQuantity,
-              contractDate,
-              remainingQuantity,
-              netDollars,
-              closedDate,
-              closedBy,
-              settlementReference,
-              markforReview,
-              locked,
-              pictureKey,
-              transactionKey,
-              needsTransactionKey: value,
-              addendumKey1,
-              addendumKey2,
-              duplicateKey,
-              notes,
-              TransactionDates,
-            };
-            const result = onChange(modelFields);
-            value = result?.needsTransactionKey ?? value;
-          }
-          if (errors.needsTransactionKey?.hasError) {
-            runValidationTasks("needsTransactionKey", value);
-          }
-          setNeedsTransactionKey(value);
-        }}
-        onBlur={() =>
-          runValidationTasks("needsTransactionKey", needsTransactionKey)
-        }
-        errorMessage={errors.needsTransactionKey?.errorMessage}
-        hasError={errors.needsTransactionKey?.hasError}
-        {...getOverrideProps(overrides, "needsTransactionKey")}
-      ></SwitchField>
       <TextField
         label="Addendum key1"
         isRequired={false}
@@ -1066,7 +969,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1: value,
               addendumKey2,
               duplicateKey,
@@ -1110,7 +1012,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2: value,
               duplicateKey,
@@ -1134,7 +1035,6 @@ export default function ContractUpdateForm(props) {
         label="Duplicate key"
         isRequired={false}
         isReadOnly={false}
-        value={duplicateKey}
         onChange={(e) => {
           let { value } = e.target;
           if (onChange) {
@@ -1154,7 +1054,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey: value,
@@ -1198,7 +1097,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -1222,7 +1120,6 @@ export default function ContractUpdateForm(props) {
         label="Transaction dates"
         isRequired={false}
         isReadOnly={false}
-        value={TransactionDates}
         onChange={(e) => {
           let { value } = e.target;
           if (onChange) {
@@ -1242,7 +1139,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -1267,14 +1163,13 @@ export default function ContractUpdateForm(props) {
         {...getOverrideProps(overrides, "CTAFlex")}
       >
         <Button
-          children="Reset"
+          children="Clear"
           type="reset"
           onClick={(event) => {
             event.preventDefault();
             resetStateValues();
           }}
-          isDisabled={!(idProp || contractModelProp)}
-          {...getOverrideProps(overrides, "ResetButton")}
+          {...getOverrideProps(overrides, "ClearButton")}
         ></Button>
         <Flex
           gap="15px"
@@ -1284,10 +1179,7 @@ export default function ContractUpdateForm(props) {
             children="Submit"
             type="submit"
             variation="primary"
-            isDisabled={
-              !(idProp || contractModelProp) ||
-              Object.values(errors).some((e) => e?.hasError)
-            }
+            isDisabled={Object.values(errors).some((e) => e?.hasError)}
             {...getOverrideProps(overrides, "SubmitButton")}
           ></Button>
         </Flex>

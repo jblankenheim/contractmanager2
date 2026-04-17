@@ -46,6 +46,7 @@ export default function ContractCreateForm(props) {
     locked: false,
     pictureKey: "",
     transactionKey: "",
+    needsTransactionKey: false,
     addendumKey1: "",
     addendumKey2: "",
     duplicateKey: "",
@@ -83,6 +84,9 @@ export default function ContractCreateForm(props) {
   const [transactionKey, setTransactionKey] = React.useState(
     initialValues.transactionKey
   );
+  const [needsTransactionKey, setNeedsTransactionKey] = React.useState(
+    initialValues.needsTransactionKey
+  );
   const [addendumKey1, setAddendumKey1] = React.useState(
     initialValues.addendumKey1
   );
@@ -113,6 +117,7 @@ export default function ContractCreateForm(props) {
     setLocked(initialValues.locked);
     setPictureKey(initialValues.pictureKey);
     setTransactionKey(initialValues.transactionKey);
+    setNeedsTransactionKey(initialValues.needsTransactionKey);
     setAddendumKey1(initialValues.addendumKey1);
     setAddendumKey2(initialValues.addendumKey2);
     setDuplicateKey(initialValues.duplicateKey);
@@ -136,6 +141,7 @@ export default function ContractCreateForm(props) {
     locked: [],
     pictureKey: [],
     transactionKey: [],
+    needsTransactionKey: [],
     addendumKey1: [],
     addendumKey2: [],
     duplicateKey: [{ type: "JSON" }],
@@ -183,6 +189,7 @@ export default function ContractCreateForm(props) {
           locked,
           pictureKey,
           transactionKey,
+          needsTransactionKey,
           addendumKey1,
           addendumKey2,
           duplicateKey,
@@ -265,6 +272,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -349,6 +357,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -392,6 +401,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -435,6 +445,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -482,6 +493,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -526,6 +538,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -573,6 +586,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -622,6 +636,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -666,6 +681,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -709,6 +725,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -752,6 +769,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -797,6 +815,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -840,6 +859,7 @@ export default function ContractCreateForm(props) {
               locked: value,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -883,6 +903,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey: value,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -926,6 +947,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey: value,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -945,6 +967,52 @@ export default function ContractCreateForm(props) {
         hasError={errors.transactionKey?.hasError}
         {...getOverrideProps(overrides, "transactionKey")}
       ></TextField>
+      <SwitchField
+        label="Needs transaction key"
+        defaultChecked={false}
+        isDisabled={false}
+        isChecked={needsTransactionKey}
+        onChange={(e) => {
+          let value = e.target.checked;
+          if (onChange) {
+            const modelFields = {
+              contractType,
+              contractNumber,
+              name,
+              location,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
+              closedDate,
+              closedBy,
+              settlementReference,
+              markforReview,
+              locked,
+              pictureKey,
+              transactionKey,
+              needsTransactionKey: value,
+              addendumKey1,
+              addendumKey2,
+              duplicateKey,
+              notes,
+              TransactionDates,
+            };
+            const result = onChange(modelFields);
+            value = result?.needsTransactionKey ?? value;
+          }
+          if (errors.needsTransactionKey?.hasError) {
+            runValidationTasks("needsTransactionKey", value);
+          }
+          setNeedsTransactionKey(value);
+        }}
+        onBlur={() =>
+          runValidationTasks("needsTransactionKey", needsTransactionKey)
+        }
+        errorMessage={errors.needsTransactionKey?.errorMessage}
+        hasError={errors.needsTransactionKey?.hasError}
+        {...getOverrideProps(overrides, "needsTransactionKey")}
+      ></SwitchField>
       <TextField
         label="Addendum key1"
         isRequired={false}
@@ -969,6 +1037,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1: value,
               addendumKey2,
               duplicateKey,
@@ -1012,6 +1081,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2: value,
               duplicateKey,
@@ -1054,6 +1124,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey: value,
@@ -1097,6 +1168,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
@@ -1139,6 +1211,7 @@ export default function ContractCreateForm(props) {
               locked,
               pictureKey,
               transactionKey,
+              needsTransactionKey,
               addendumKey1,
               addendumKey2,
               duplicateKey,
