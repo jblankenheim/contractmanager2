@@ -154,174 +154,177 @@ export default function HomePage({ user, signOut }) {
   /* =========================
      RENDER
   ========================= */
-  return (
-    <div style={{ padding: 20, color: "white" }}>
-      {/* HEADER */}
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", gap: 15, alignItems: "center" }}>
-          <img src={logo} alt="Logo" style={{ width: 120 }} />
-          <h2>Contracts Dashboard</h2>
-        </div>
-        <button onClick={signOut}>Sign Out</button>
+return (
+  <div style={{ padding: 20, color: "white" }}>
+    {/* HEADER */}
+    <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", gap: 15, alignItems: "center" }}>
+        <img src={logo} alt="Logo" style={{ width: 120 }} />
+        <h2>Contracts Dashboard</h2>
       </div>
+      <button onClick={signOut}>Sign Out</button>
+    </div>
 
-      {/* TABS */}
-      <div style={{ display: "flex", gap: 12, margin: "20px 0" }}>
-        {[
-          { key: "contracts", label: "Contracts" },
-          { key: "review", label: "Review" },
-          { key: "close", label: "Review for Close" },
-          { key: "bulk", label: "Bulk Upload" },
-        ].map(t => (
-          <button
-            key={t.key}
-            onClick={() => setActiveView(t.key)}
-            style={{
-              minWidth: 180,
-              padding: "12px 18px",
-              background: activeView === t.key ? "#1f6feb" : "#2a2a2a",
-              color: "white",
-              borderRadius: 6,
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
+    {/* TABS */}
+    <div style={{ display: "flex", gap: 12, margin: "20px 0" }}>
+      {[
+        { key: "contracts", label: "Contracts" },
+        { key: "review", label: "Review" },
+        { key: "close", label: "Review for Close" },
+        { key: "bulk", label: "Bulk Upload" },
+      ].map(t => (
+        <button
+          key={t.key}
+          onClick={() => setActiveView(t.key)}
+          style={{
+            minWidth: 180,
+            padding: "12px 18px",
+            background: activeView === t.key ? "#1f6feb" : "#2a2a2a",
+            color: "white",
+            borderRadius: 6,
+          }}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+
+    {activeView === "bulk" && <BulkUploadPage />}
+
+    {/* FILTER BAR */}
+    {activeView !== "bulk" && (
+      <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+        <select value={contractType} onChange={e => setContractType(e.target.value)}>
+          {contractTypes.map(t => (
+            <option key={t}>{t}</option>
+          ))}
+        </select>
+
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+          <option value="all">All</option>
+        </select>
+
+        <select value={signedFilter} onChange={e => setSignedFilter(e.target.value)}>
+          <option value="all">All Signed</option>
+          <option value="signed">Signed</option>
+          <option value="unsigned">Unsigned</option>
+        </select>
+
+        <input
+          placeholder="Search contract #"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
       </div>
+    )}
 
-      {activeView === "bulk" && <BulkUploadPage />}
+    {/* TABLE */}
+    {activeView !== "bulk" && (
+      <table style={{ width: "100%", marginTop: 10 }}>
+        <tbody>
+          {viewFiltered.map(c => (
+            <tr
+              key={c.id}
+              onClick={() => {
+                const pdfs = c.media.filter(m => m.type === "pdf");
+                if (pdfs.length) {
+                  setActiveContractMedia({ pdfs, activeIndex: 0 });
+                }
+              }}
+              style={{
+                cursor: "pointer",
+                backgroundColor: "#111",
+                borderLeft: "4px solid #1f6feb",
+              }}
+            >
+              <td>{c.contractNumber}</td>
+              <td>{c.contractType}</td>
 
-      {/* ✅ FILTER BAR (RESTORED) */}
-      {activeView !== "bulk" && (
-        <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-          <select value={contractType} onChange={e => setContractType(e.target.value)}>
-            {contractTypes.map(t => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
+              {/* DOCS COLUMN */}
+              <td>
+                {c.media.map((m, i) => (
+                  <button
+                    key={i}
+                    onClick={e => {
+                      e.stopPropagation();
+                      setActiveMedia(m);
+                    }}
+                  >
+                    {m.type}
+                  </button>
+                ))}
+              </td>
 
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-            <option value="open">Open</option>
-            <option value="closed">Closed</option>
-            <option value="all">All</option>
-          </select>
+              <td>{c.contractSigned ? "✔" : "✖"}</td>
+              <td>{c.closedDate ?? ""}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
 
-          <select value={signedFilter} onChange={e => setSignedFilter(e.target.value)}>
-            <option value="all">All Signed</option>
-            <option value="signed">Signed</option>
-            <option value="unsigned">Unsigned</option>
-          </select>
+    {/* ✅ MULTI‑PDF VIEWER (row click) */}
+    {activeContractMedia && (
+      <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 1000 }}>
+        <button onClick={() => setActiveContractMedia(null)}>Close</button>
 
-          <input
-            placeholder="Search contract #"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+        <div style={{ display: "flex", gap: 8, padding: 8 }}>
+          {activeContractMedia.pdfs.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() =>
+                setActiveContractMedia(prev => ({
+                  ...prev,
+                  activeIndex: idx,
+                }))
+              }
+            >
+              PDF {idx + 1}
+            </button>
+          ))}
         </div>
-      )}
 
-      {/* TABLE */}
-      {activeView !== "bulk" && (
-        <table style={{ width: "100%", marginTop: 10 }}>
-          <tbody>
-            {viewFiltered.map(c => (
-              
-<tr
-  key={c.id}
-  onClick={() => {
-    const pdfs = c.media.filter(m => m.type === "pdf");
-    if (pdfs.length) {
-      setActiveContractMedia({ pdfs, activeIndex: 0 });
-    }
-  }}
-  style={{
-    cursor: "pointer",
-    backgroundColor: "#111",
-    borderLeft: "4px solid #1f6feb",
-  }}
->
-  <td>{c.contractNumber}</td>
-  <td>{c.contractType}</td>
+        <iframe
+          src={activeContractMedia.pdfs[activeContractMedia.activeIndex].url}
+          style={{ width: "100%", height: "100%" }}
+        />
+      </div>
+    )}
 
-  {/* ✅ RESTORED DOCS COLUMN */}
-  <td>
-    {c.media.map((m, i) => (
-      <button
-        key={i}
-        onClick={e => {
-          e.stopPropagation(); // ✅ prevent row click
-          setActiveMedia(m);   // ✅ single‑PDF viewer
+    {/* ✅ SINGLE PDF / IMAGE VIEWER (Docs buttons) */}
+    {activeMedia && (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "#000",
+          zIndex: 1500,
         }}
       >
-        {m.type}
-      </button>
-    ))}
-  </td>
+        <button onClick={() => setActiveMedia(null)}>Close</button>
 
-  <td>{c.contractSigned ? "✔" : "✖"}</td>
-  <td>{c.closedDate ?? ""}</td>
-</tr>
-
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {/* ✅ SINGLE IFRAME MODAL */}
-      {activeContractMedia && (
-        <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 1000 }}>
-          <button onClick={() => setActiveContractMedia(null)}>Close</button>
-
-          <div style={{ display: "flex", gap: 8, padding: 8 }}>
-            {activeContractMedia.pdfs.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() =>
-                  setActiveContractMedia(prev => ({
-                    ...prev,
-                    activeIndex: idx,
-                  }))
-                }
-              >
-                PDF {idx + 1}
-              </button>
-            ))}
-          </div>
-
+        {activeMedia.type === "pdf" ? (
           <iframe
-            src={activeContractMedia.pdfs[activeContractMedia.activeIndex].url}
+            src={activeMedia.url}
             style={{ width: "100%", height: "100%" }}
           />
-        </div>
-
-/* ✅ SINGLE PDF / IMAGE FULLSCREEN VIEWER */}
-{activeMedia && (
-  <div
-    style={{
-      position: "fixed",
-      inset: 0,
-      background: "#000",
-      zIndex: 1500, // above table, below contract viewer if needed
-    }}
-  >
-    <button onClick={() => setActiveMedia(null)}>Close</button>
-
-    {activeMedia.type === "pdf" ? (
-      <iframe
-        src={activeMedia.url}
-        style={{ width: "100%", height: "100%" }}
-      />
-    ) : (
-      <img
-        src={activeMedia.url}
-        alt=""
-        style={{ maxWidth: "100%", maxHeight: "100%", margin: "auto", display: "block" }}
-      />
+        ) : (
+          <img
+            src={activeMedia.url}
+            alt=""
+            style={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              margin: "auto",
+              display: "block",
+            }}
+          />
+        )}
+      </div>
     )}
   </div>
-)}
+);
 
-      )}
-    </div>
-  );
 }
