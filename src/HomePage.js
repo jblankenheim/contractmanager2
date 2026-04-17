@@ -293,6 +293,34 @@ export default function HomePage({ user, signOut }) {
             style={{ width: "100%", height: "100%" }}
           />
         </div>
+
+/* ✅ SINGLE PDF / IMAGE FULLSCREEN VIEWER */}
+{activeMedia && (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "#000",
+      zIndex: 1500, // above table, below contract viewer if needed
+    }}
+  >
+    <button onClick={() => setActiveMedia(null)}>Close</button>
+
+    {activeMedia.type === "pdf" ? (
+      <iframe
+        src={activeMedia.url}
+        style={{ width: "100%", height: "100%" }}
+      />
+    ) : (
+      <img
+        src={activeMedia.url}
+        alt=""
+        style={{ maxWidth: "100%", maxHeight: "100%", margin: "auto", display: "block" }}
+      />
+    )}
+  </div>
+)}
+
       )}
     </div>
   );
