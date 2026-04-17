@@ -25,7 +25,7 @@ export default function HomePage({ user, signOut }) {
 
   const [activeMedia, setActiveMedia] = useState(null);
 
-  // ✅ carries ALL pdfs, one iframe
+  // ✅ all PDFs, one iframe
   const [activeContractMedia, setActiveContractMedia] = useState(null);
   /*
     {
@@ -97,7 +97,7 @@ export default function HomePage({ user, signOut }) {
   }
 
   /* =========================
-     FILTERS
+     FILTER BAR LOGIC
   ========================= */
   useEffect(() => {
     let data = [...contracts];
@@ -124,20 +124,6 @@ export default function HomePage({ user, signOut }) {
   }, [contracts, statusFilter, signedFilter, contractType, search]);
 
   /* =========================
-     ESC CLOSE
-  ========================= */
-  useEffect(() => {
-    const onKey = e => {
-      if (e.key === "Escape") {
-        setActiveMedia(null);
-        setActiveContractMedia(null);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  /* =========================
      VIEW FILTER
   ========================= */
   const viewFiltered = filtered.filter(c => {
@@ -152,34 +138,18 @@ export default function HomePage({ user, signOut }) {
   ];
 
   /* =========================
-     UPLOAD
+     ESC CLOSE
   ========================= */
-  async function handleUploadContract() {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const uploadKey = `uploads/contracts/${timestamp}.pdf`;
-
-    const uploadResult = await uploadData({
-      path: uploadKey,
-      data: uploadFile,
-      options: { contentType: "application/pdf", accessLevel: "public" },
-    }).result;
-
-    await post({
-      apiName: "contractsAPI",
-      path: "/submitEditedContract",
-      options: {
-        body: {
-          sourceKey: uploadResult.path,
-          contractNumber: uploadContractNumber,
-          contractType: uploadContractType,
-          pdfType: uploadPdfType,
-        },
-      },
-    });
-
-    setShowUploadContract(false);
-    fetchContracts();
-  }
+  useEffect(() => {
+    const onKey = e => {
+      if (e.key === "Escape") {
+        setActiveMedia(null);
+        setActiveContractMedia(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   /* =========================
      RENDER
@@ -197,28 +167,62 @@ export default function HomePage({ user, signOut }) {
 
       {/* TABS */}
       <div style={{ display: "flex", gap: 12, margin: "20px 0" }}>
-        {["contracts", "review", "close", "bulk"].map(v => (
+        {[
+          { key: "contracts", label: "Contracts" },
+          { key: "review", label: "Review" },
+          { key: "close", label: "Review for Close" },
+          { key: "bulk", label: "Bulk Upload" },
+        ].map(t => (
           <button
-            key={v}
-            onClick={() => setActiveView(v)}
+            key={t.key}
+            onClick={() => setActiveView(t.key)}
             style={{
               minWidth: 180,
               padding: "12px 18px",
-              background: activeView === v ? "#1f6feb" : "#2a2a2a",
+              background: activeView === t.key ? "#1f6feb" : "#2a2a2a",
               color: "white",
               borderRadius: 6,
             }}
           >
-            {v}
+            {t.label}
           </button>
         ))}
       </div>
 
       {activeView === "bulk" && <BulkUploadPage />}
 
+      {/* ✅ FILTER BAR (RESTORED) */}
+      {activeView !== "bulk" && (
+        <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+          <select value={contractType} onChange={e => setContractType(e.target.value)}>
+            {contractTypes.map(t => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+            <option value="all">All</option>
+          </select>
+
+          <select value={signedFilter} onChange={e => setSignedFilter(e.target.value)}>
+            <option value="all">All Signed</option>
+            <option value="signed">Signed</option>
+            <option value="unsigned">Unsigned</option>
+          </select>
+
+          <input
+            placeholder="Search contract #"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+      )}
+
       {/* TABLE */}
       {activeView !== "bulk" && (
-        <table style={{ width: "100%", marginTop: 20 }}>
+        <table style={{ width: "100%", marginTop: 10 }}>
           <tbody>
             {viewFiltered.map(c => (
               <tr
@@ -240,13 +244,13 @@ export default function HomePage({ user, signOut }) {
         </table>
       )}
 
-      {/* ✅ SINGLE IFRAME — ALL PDFs */}
+      {/* ✅ SINGLE IFRAME MODAL */}
       {activeContractMedia && (
         <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 1000 }}>
           <button onClick={() => setActiveContractMedia(null)}>Close</button>
 
           <div style={{ display: "flex", gap: 8, padding: 8 }}>
-            {activeContractMedia.pdfs.map((p, idx) => (
+            {activeContractMedia.pdfs.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() =>
@@ -270,4 +274,3 @@ export default function HomePage({ user, signOut }) {
     </div>
   );
 }
-
