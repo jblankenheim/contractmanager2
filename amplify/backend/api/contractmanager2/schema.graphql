@@ -19,6 +19,7 @@ type Contract @model @auth(rules: [{allow: public}]) {
   locked: Boolean  
   pictureKey: String
   transactionKey: String
+  transactionKeyPageCount: Int
   needsTransactionKey: Boolean
   addendumKey1: String
   addendumKey2: String

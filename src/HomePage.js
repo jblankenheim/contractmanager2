@@ -301,57 +301,47 @@ export default function HomePage({ user, signOut }) {
           </div>
 
           {/* TABLE */}
-          <table style={{
-            width: "100%", 
-            marginTop: 20, 
-            width: "100%",
-            marginTop: 20,
-            borderCollapse: "separate",
-            borderSpacing: "0 6px", 
-            borderRadius: 8,
-            overflow: "hidden",
-          }}>
+          <table style={{ width: "100%", marginTop: 20, borderCollapse: "separate", borderSpacing: "0 6px", borderRadius: 8, overflow: "hidden" }}>
             <thead>
               <tr>
-                <th>Contract #</th>
-                <th>Type</th>
-                <th>Docs</th>
-                <th>Signed</th>
-                <th>Closed</th>
+                <th style={{ textAlign: 'left', padding: '12px' }}>Contract #</th>
+                <th style={{ textAlign: 'left', padding: '12px' }}>Name</th>
+                <th style={{ textAlign: 'left', padding: '12px' }}>Type</th>
+                <th style={{ textAlign: 'left', padding: '12px' }}>Commodity</th>
+                <th style={{ textAlign: 'left', padding: '12px' }}>Quantity</th>
+                <th style={{ textAlign: 'left', padding: '12px' }}>Docs</th>
+                <th style={{ textAlign: 'left', padding: '12px' }}>Signed</th>
+                <th style={{ textAlign: 'left', padding: '12px' }}>Closed</th>
               </tr>
             </thead>
             <tbody>
-              {viewFiltered.map(c => (
+              {viewFiltered.map((c, index) => (
                 <tr
                   key={c.id}
                   onClick={() => {
                     const contractPdf = c.media.find(m => m.type === "pdf");
-                    const transactionPdf = c.media.find(m =>
-                      m.url.includes("transaction")
-                    );
+                    const transactionPdf = c.media.find(m => m.url.includes("transaction"));
                     setActiveContractMedia({ contractPdf, transactionPdf });
                   }}
                   style={{
                     cursor: "pointer",
-                    backgroundColor: "#111", // default dark row
+                    backgroundColor: index % 2 === 0 ? "#111" : "#1b1b1b",
                     borderLeft: "4px solid #1f6feb",
                     transition: "all 0.2s ease",
                   }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.backgroundColor = "#1a1a1a";
-                  }}
-                  onMouseLeave={e => {
-                    const index = viewFiltered.findIndex(x => x.id === c.id);
-                    e.currentTarget.style.backgroundColor =
-                      index % 2 === 0 ? "#111" : "#1b1b1b";
-                  }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#1a1a1a"; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = index % 2 === 0 ? "#111" : "#1b1b1b"; }}
                 >
-                  <td>{c.contractNumber}</td>
-                  <td>{c.contractType}</td>
-                  <td>
+                  <td style={{ padding: '12px' }}>{c.contractNumber}</td>
+                  <td style={{ padding: '12px' }}>{c.name || ""}</td>
+                  <td style={{ padding: '12px' }}>{c.contractType}</td>
+                  <td style={{ padding: '12px' }}>{c.commodity || ""}</td>
+                  <td style={{ padding: '12px' }}>{c.quantity || ""}</td>
+                  <td style={{ padding: '12px' }}>
                     {c.media.map((m, i) => (
                       <button
                         key={i}
+                        style={{ marginRight: 4, fontSize: '11px', padding: '2px 6px' }}
                         onClick={e => {
                           e.stopPropagation();
                           setActiveMedia(m);
@@ -361,8 +351,8 @@ export default function HomePage({ user, signOut }) {
                       </button>
                     ))}
                   </td>
-                  <td>{c.contractSigned ? "✔" : "✖"}</td>
-                  <td>{c.closedDate ?? ""}</td>
+                  <td style={{ padding: '12px' }}>{c.contractSigned ? "✔" : "✖"}</td>
+                  <td style={{ padding: '12px' }}>{c.closedDate ?? ""}</td>
                 </tr>
               ))}
             </tbody>

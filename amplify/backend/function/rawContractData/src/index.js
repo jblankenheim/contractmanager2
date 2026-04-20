@@ -169,56 +169,50 @@ function normalizeAWSDate(value) {
 // ----------------------
 async function upsertContract(row) {
   const id = `${row.contractType}_${row.contractNumber}`;
-
-  const existing = await dynamodb.send(
-    new GetCommand({
-      TableName: TABLE_NAME,
-      Key: { id },
-    })
-  );
-
   const now = new Date().toISOString();
 
-  if (!existing.Item) {
-    await dynamodb.send(
-      new PutCommand({
-        TableName: TABLE_NAME,
-        Item: {
-          id,
-          ...row,
-          createdAt: now,
-          updatedAt: now,
-        },
-      })
-    );
-  } else {
+  try {
     await dynamodb.send(
       new UpdateCommand({
         TableName: TABLE_NAME,
         Key: { id },
+        // Check that closedDate and closedBy both DO NOT exist
+        ConditionExpression: "attribute_not_exists(closedDate) AND attribute_not_exists(closedBy)",
         UpdateExpression: `
-          SET 
-            #name = :name,
-            #location = :location,
-            contractDate = :contractDate,
-            originalQuantity = :originalQuantity,
-            remainingQuantity = :remainingQuantity,
-            updatedAt = :updatedAt
+          SET contractType = :contractType,
+              contractNumber = :contractNumber,
+              #name = :name,
+              #location = :location,
+              contractDate = :contractDate,
+              originalQuantity = :originalQuantity,
+              remainingQuantity = :remainingQuantity,
+              updatedAt = :updatedAt,
+              createdAt = if_not_exists(createdAt, :createdAt)
         `,
         ExpressionAttributeNames: {
           "#name": "name",
           "#location": "location",
         },
         ExpressionAttributeValues: {
+          ":contractType": row.contractType,
+          ":contractNumber": row.contractNumber,
           ":name": row.name,
           ":location": row.location,
           ":contractDate": row.contractDate,
           ":originalQuantity": row.originalQuantity,
           ":remainingQuantity": row.remainingQuantity,
           ":updatedAt": now,
+          ":createdAt": now,
         },
       })
     );
+  } catch (err) {
+    // If the condition fails, it throws a ConditionalCheckFailedException
+    if (err.name === "ConditionalCheckFailedException") {
+      console.log(`Skipping update for closed contract: ${id}`);
+      return; // Simply skip this row and continue with the batch
+    }
+    throw err; // Re-throw real errors
   }
 }
 

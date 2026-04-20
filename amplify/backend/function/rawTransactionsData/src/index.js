@@ -139,40 +139,76 @@ async function batchGetContracts(ids) {
 }
 
 async function processContract(id, contract, existingItem) {
-    const originalQuantity = existingItem?.originalQuantity ?? 0;
-    const now = new Date().toISOString();
-    const sorted = contract.transactions.filter(t => t.date).sort((a, b) => a.date.localeCompare(b.date));
+  // ✅ CHECK: If the contract is already closed, stop here and do nothing
+  if (existingItem?.closedBy || existingItem?.closedDate) {
+    console.log(`Skipping closed contract: ${id}`);
+    return; 
+  }
 
-    let remaining = originalQuantity;
-    const enriched = sorted.map(t => {
-        remaining -= t.quantity;
-        return { ...t, remainingQuantity: remaining, contractId: id };
-    });
+  const originalQuantity = existingItem?.originalQuantity ?? 0;
+  const now = new Date().toISOString();
+  
+  const sorted = contract.transactions
+    .filter((t) => t.date)
+    .sort((a, b) => a.date.localeCompare(b.date));
 
-    const finalRemaining = enriched.length > 0 ? enriched[enriched.length - 1].remainingQuantity : originalQuantity;
+  let remaining = originalQuantity;
+  const enriched = sorted.map((t) => {
+    remaining -= t.quantity;
+    return { ...t, remainingQuantity: remaining, contractId: id };
+  });
 
-    const common = {
-        transactionDates: enriched,
-        remainingQuantity: finalRemaining,
-        location: contract.location,
-        updatedAt: now,
-        needsTransactionKey: true 
-    };
+  const finalRemaining = enriched.length > 0 
+    ? enriched[enriched.length - 1].remainingQuantity 
+    : originalQuantity;
 
-    if (!existingItem) {
-        await ddb.send(new PutCommand({
-            TableName: TABLE_NAME,
-            Item: { id, contractType: contract.contractType, contractNumber: contract.contractNumber, originalQuantity, createdAt: now, ...common },
-        }));
-    } else {
-        await ddb.send(new UpdateCommand({
-            TableName: TABLE_NAME,
-            Key: { id },
-            UpdateExpression: `SET transactionDates = :t, remainingQuantity = :r, #loc = :l, updatedAt = :u, needsTransactionKey = :n`,
-            ExpressionAttributeNames: { "#loc": "location" },
-            ExpressionAttributeValues: { ":t": common.transactionDates, ":r": common.remainingQuantity, ":l": common.location, ":u": common.updatedAt, ":n": true },
-        }));
-    }
+  const common = {
+    transactionDates: enriched,
+    remainingQuantity: finalRemaining,
+    location: contract.location,
+    updatedAt: now,
+    needsTransactionKey: true,
+  };
+
+  if (!existingItem) {
+    await ddb.send(
+      new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          id,
+          contractType: contract.contractType,
+          contractNumber: contract.contractNumber,
+          originalQuantity,
+          createdAt: now,
+          ...common,
+        },
+      })
+    );
+  } else {
+    await ddb.send(
+      new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: { id },
+        // ✅ EXTRA SAFETY: Prevents update even if existingItem check was bypassed
+        ConditionExpression: "attribute_not_exists(closedBy) AND attribute_not_exists(closedDate)",
+        UpdateExpression: `
+          SET transactionDates = :t, 
+              remainingQuantity = :r, 
+              #loc = :l, 
+              updatedAt = :u, 
+              needsTransactionKey = :n
+        `,
+        ExpressionAttributeNames: { "#loc": "location" },
+        ExpressionAttributeValues: {
+          ":t": common.transactionDates,
+          ":r": common.remainingQuantity,
+          ":l": common.location,
+          ":u": now,
+          ":n": true,
+        },
+      })
+    );
+  }
 }
 
 async function pMap(items, fn, { concurrency = 25 } = {}) {

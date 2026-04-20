@@ -37,6 +37,7 @@ export declare type ContractUpdateFormInputValues = {
     locked?: boolean;
     pictureKey?: string;
     transactionKey?: string;
+    transactionKeyPageCount?: number;
     needsTransactionKey?: boolean;
     addendumKey1?: string;
     addendumKey2?: string;
@@ -60,6 +61,7 @@ export declare type ContractUpdateFormValidationValues = {
     locked?: ValidationFunction<boolean>;
     pictureKey?: ValidationFunction<string>;
     transactionKey?: ValidationFunction<string>;
+    transactionKeyPageCount?: ValidationFunction<number>;
     needsTransactionKey?: ValidationFunction<boolean>;
     addendumKey1?: ValidationFunction<string>;
     addendumKey2?: ValidationFunction<string>;
@@ -85,6 +87,7 @@ export declare type ContractUpdateFormOverridesProps = {
     locked?: PrimitiveOverrideProps<SwitchFieldProps>;
     pictureKey?: PrimitiveOverrideProps<TextFieldProps>;
     transactionKey?: PrimitiveOverrideProps<TextFieldProps>;
+    transactionKeyPageCount?: PrimitiveOverrideProps<TextFieldProps>;
     needsTransactionKey?: PrimitiveOverrideProps<SwitchFieldProps>;
     addendumKey1?: PrimitiveOverrideProps<TextFieldProps>;
     addendumKey2?: PrimitiveOverrideProps<TextFieldProps>;
