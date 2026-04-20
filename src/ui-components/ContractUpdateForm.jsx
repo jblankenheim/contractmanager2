@@ -48,7 +48,6 @@ export default function ContractUpdateForm(props) {
     locked: false,
     pictureKey: "",
     transactionKey: "",
-    transactionKeyPageCount: "",
     needsTransactionKey: false,
     addendumKey1: "",
     addendumKey2: "",
@@ -87,9 +86,6 @@ export default function ContractUpdateForm(props) {
   const [transactionKey, setTransactionKey] = React.useState(
     initialValues.transactionKey
   );
-  const [transactionKeyPageCount, setTransactionKeyPageCount] = React.useState(
-    initialValues.transactionKeyPageCount
-  );
   const [needsTransactionKey, setNeedsTransactionKey] = React.useState(
     initialValues.needsTransactionKey
   );
@@ -126,7 +122,6 @@ export default function ContractUpdateForm(props) {
     setLocked(cleanValues.locked);
     setPictureKey(cleanValues.pictureKey);
     setTransactionKey(cleanValues.transactionKey);
-    setTransactionKeyPageCount(cleanValues.transactionKeyPageCount);
     setNeedsTransactionKey(cleanValues.needsTransactionKey);
     setAddendumKey1(cleanValues.addendumKey1);
     setAddendumKey2(cleanValues.addendumKey2);
@@ -177,7 +172,6 @@ export default function ContractUpdateForm(props) {
     locked: [],
     pictureKey: [],
     transactionKey: [],
-    transactionKeyPageCount: [],
     needsTransactionKey: [],
     addendumKey1: [],
     addendumKey2: [],
@@ -226,7 +220,6 @@ export default function ContractUpdateForm(props) {
           locked: locked ?? null,
           pictureKey: pictureKey ?? null,
           transactionKey: transactionKey ?? null,
-          transactionKeyPageCount: transactionKeyPageCount ?? null,
           needsTransactionKey: needsTransactionKey ?? null,
           addendumKey1: addendumKey1 ?? null,
           addendumKey2: addendumKey2 ?? null,
@@ -308,7 +301,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -394,7 +386,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -439,7 +430,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -484,7 +474,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -533,7 +522,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -579,7 +567,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -628,7 +615,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -679,7 +665,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -725,7 +710,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -770,7 +754,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -815,7 +798,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -862,7 +844,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -907,7 +888,6 @@ export default function ContractUpdateForm(props) {
               locked: value,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -952,7 +932,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey: value,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -997,7 +976,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey: value,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -1017,57 +995,6 @@ export default function ContractUpdateForm(props) {
         errorMessage={errors.transactionKey?.errorMessage}
         hasError={errors.transactionKey?.hasError}
         {...getOverrideProps(overrides, "transactionKey")}
-      ></TextField>
-      <TextField
-        label="Transaction key page count"
-        isRequired={false}
-        isReadOnly={false}
-        type="number"
-        step="any"
-        value={transactionKeyPageCount}
-        onChange={(e) => {
-          let value = isNaN(parseInt(e.target.value))
-            ? e.target.value
-            : parseInt(e.target.value);
-          if (onChange) {
-            const modelFields = {
-              contractType,
-              contractNumber,
-              name,
-              location,
-              originalQuantity,
-              contractDate,
-              remainingQuantity,
-              netDollars,
-              closedDate,
-              closedBy,
-              settlementReference,
-              markforReview,
-              locked,
-              pictureKey,
-              transactionKey,
-              transactionKeyPageCount: value,
-              needsTransactionKey,
-              addendumKey1,
-              addendumKey2,
-              duplicateKey,
-              notes,
-              TransactionDates,
-            };
-            const result = onChange(modelFields);
-            value = result?.transactionKeyPageCount ?? value;
-          }
-          if (errors.transactionKeyPageCount?.hasError) {
-            runValidationTasks("transactionKeyPageCount", value);
-          }
-          setTransactionKeyPageCount(value);
-        }}
-        onBlur={() =>
-          runValidationTasks("transactionKeyPageCount", transactionKeyPageCount)
-        }
-        errorMessage={errors.transactionKeyPageCount?.errorMessage}
-        hasError={errors.transactionKeyPageCount?.hasError}
-        {...getOverrideProps(overrides, "transactionKeyPageCount")}
       ></TextField>
       <SwitchField
         label="Needs transaction key"
@@ -1093,7 +1020,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey: value,
               addendumKey1,
               addendumKey2,
@@ -1140,7 +1066,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1: value,
               addendumKey2,
@@ -1185,7 +1110,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2: value,
@@ -1230,7 +1154,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -1275,7 +1198,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,
@@ -1320,7 +1242,6 @@ export default function ContractUpdateForm(props) {
               locked,
               pictureKey,
               transactionKey,
-              transactionKeyPageCount,
               needsTransactionKey,
               addendumKey1,
               addendumKey2,

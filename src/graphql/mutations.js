@@ -23,7 +23,6 @@ export const createContract = /* GraphQL */ `
       locked
       pictureKey
       transactionKey
-      transactionKeyPageCount
       needsTransactionKey
       addendumKey1
       addendumKey2
@@ -58,7 +57,6 @@ export const updateContract = /* GraphQL */ `
       locked
       pictureKey
       transactionKey
-      transactionKeyPageCount
       needsTransactionKey
       addendumKey1
       addendumKey2
@@ -93,7 +91,6 @@ export const deleteContract = /* GraphQL */ `
       locked
       pictureKey
       transactionKey
-      transactionKeyPageCount
       needsTransactionKey
       addendumKey1
       addendumKey2
