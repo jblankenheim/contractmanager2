@@ -2,9 +2,7 @@ const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const {
   DynamoDBDocumentClient,
-  PutCommand,
   UpdateCommand,
-  GetCommand,
 } = require("@aws-sdk/lib-dynamodb");
 
 const { parse } = require("csv-parse/sync");
@@ -26,11 +24,52 @@ const REQUIRED_FIELDS = [
   "remainingQuantity",
 ];
 
-// ----------------------
+
+// ======================
+// ✅ SAFE CSV NUMBER PARSER
+// ======================
+function parseCsvNumber(value, fieldName, errors) {
+  if (value === undefined || value === null) {
+    errors.push(`Missing ${fieldName}`);
+    return null;
+  }
+
+  const cleaned = String(value).replace(/,/g, "").trim();
+  const n = Number(cleaned);
+
+  if (!Number.isFinite(n)) {
+    errors.push(`Invalid number for ${fieldName}: ${value}`);
+    return null;
+  }
+
+  return n;
+}
+
+
+// ======================
+// ✅ BATCH PROCESSOR (KEY TO PERFORMANCE)
+// ======================
+async function processInBatches(items, batchSize = 5) {
+  let results = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map(upsertContract));
+    results = results.concat(batchResults);
+  }
+  return results;
+}
+
+// ======================
+// ✅ LAMBDA HANDLER
+// ======================
 exports.handler = async (event) => {
   try {
     const body =
       typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+      const results = await processInBatches(validRows, 5);
+
+const updatedIds = results.filter(r => r.status === "updated").map(r => r.id);
+const closedIds = results.filter(r => r.status === "closed").map(r => r.id);
 
     const fileKey = body.file;
     if (!fileKey) {
@@ -43,9 +82,6 @@ exports.handler = async (event) => {
     const validRows = [];
     const invalidRows = [];
 
-    // ----------------------
-    // VALIDATION + CLEANING STAGE
-    // ----------------------
     for (const rawRow of rows) {
       const validation = validateAndCleanRow(rawRow);
 
@@ -59,17 +95,15 @@ exports.handler = async (event) => {
       }
     }
 
-    // ----------------------
-    // DYNAMO ONLY CLEAN DATA
-    // ----------------------
-    for (const cleanRow of validRows) {
-      await upsertContract(cleanRow);
-    }
+    // ✅ FAST, PARALLEL WRITES
+    await processInBatches(validRows, 5);
 
     return response(200, {
       processed: rows.length,
       valid: validRows.length,
-      invalid: invalidRows.length,
+      updatedCount: updatedIds.length,
+      closedCount: closedIds.length,
+      closedContractIds: closedIds, // List of IDs that were skipped because they are closed
       invalidRows,
     });
   } catch (err) {
@@ -78,19 +112,17 @@ exports.handler = async (event) => {
   }
 };
 
-// ----------------------
+
+// ======================
 async function loadS3File(key) {
   const res = await s3Client.send(
-    new GetObjectCommand({
-      Bucket: BUCKET,
-      Key: key,
-    })
+    new GetObjectCommand({ Bucket: BUCKET, Key: key })
   );
-
   return res.Body.transformToString();
 }
 
-// ----------------------
+
+// ======================
 function parseCsv(data) {
   return parse(data, {
     columns: true,
@@ -102,48 +134,55 @@ function parseCsv(data) {
   }));
 }
 
-// ----------------------
-// VALIDATE + TRANSFORM (single source of truth)
-// ----------------------
+
+// ======================
+// ✅ VALIDATE + CLEAN ROW
+// ======================
 function validateAndCleanRow(rawRow) {
   const errors = [];
 
-  // required field check
   for (const field of REQUIRED_FIELDS) {
     const value = rawRow[field];
-
     if (value === undefined || value === null || String(value).trim() === "") {
       errors.push(`Missing ${field}`);
     }
   }
 
   const contractDate = normalizeAWSDate(rawRow.contractDate);
+  if (!contractDate) errors.push("Invalid contractDate format");
 
-  if (!contractDate) {
-    errors.push("Invalid contractDate format");
-  }
+  const originalQuantity = parseCsvNumber(
+    rawRow.originalQuantity,
+    "originalQuantity",
+    errors
+  );
+
+  const remainingQuantity = parseCsvNumber(
+    rawRow.remainingQuantity,
+    "remainingQuantity",
+    errors
+  );
 
   if (errors.length > 0) {
     return { ok: false, errors };
   }
 
-  // ----------------------
-  // CLEAN OBJECT (THIS IS WHAT WE USE GOING FORWARD)
-  // ----------------------
-  const cleanRow = {
-    contractType: rawRow.contractType,
-    contractNumber: rawRow.contractNumber,
-    name: rawRow.name,
-    location: rawRow.location,
-    contractDate,
-    originalQuantity: Number(rawRow.originalQuantity),
-    remainingQuantity: Number(rawRow.remainingQuantity),
+  return {
+    ok: true,
+    cleanRow: {
+      contractType: rawRow.contractType,
+      contractNumber: rawRow.contractNumber,
+      name: rawRow.name,
+      location: rawRow.location,
+      contractDate,
+      originalQuantity,
+      remainingQuantity,
+    },
   };
-
-  return { ok: true, cleanRow };
 }
 
-// ----------------------
+
+// ======================
 function normalizeAWSDate(value) {
   if (!value) return null;
 
@@ -152,7 +191,6 @@ function normalizeAWSDate(value) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
 
   const parts = v.split("/");
-
   if (parts.length === 3) {
     let [month, day, year] = parts;
     return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -166,7 +204,11 @@ function normalizeAWSDate(value) {
   return null;
 }
 
-// ----------------------
+
+// ======================
+// ✅ SINGLE-CALL ATOMIC UPSERT
+// ======================
+
 async function upsertContract(row) {
   const id = `${row.contractType}_${row.contractNumber}`;
   const now = new Date().toISOString();
@@ -176,8 +218,8 @@ async function upsertContract(row) {
       new UpdateCommand({
         TableName: TABLE_NAME,
         Key: { id },
-        // Check that closedDate and closedBy both DO NOT exist
-        ConditionExpression: "attribute_not_exists(closedDate) AND attribute_not_exists(closedBy)",
+        // ✅ Check that both closedBy and closedDate do NOT exist
+        ConditionExpression: "attribute_not_exists(closedBy) AND attribute_not_exists(closedDate)",
         UpdateExpression: `
           SET contractType = :contractType,
               contractNumber = :contractNumber,
@@ -206,17 +248,17 @@ async function upsertContract(row) {
         },
       })
     );
+    return { id, status: "updated" };
   } catch (err) {
-    // If the condition fails, it throws a ConditionalCheckFailedException
     if (err.name === "ConditionalCheckFailedException") {
-      console.log(`Skipping update for closed contract: ${id}`);
-      return; // Simply skip this row and continue with the batch
+      // ✅ Return as closed if the condition failed
+      return { id, status: "closed" };
     }
-    throw err; // Re-throw real errors
+    throw err; // Re-throw other errors (like network/permission issues)
   }
 }
 
-// ----------------------
+// ======================
 function response(statusCode, body) {
   return {
     statusCode,
