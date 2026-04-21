@@ -6,6 +6,7 @@ import BulkUploadPage from "./Bulkuploadpage";
 import { post } from "aws-amplify/api";
 import { uploadData } from "aws-amplify/storage";
 import logo from "./assets/CFE_Logo.png";
+import ReviewAndLock from "./ReviewAndLock";
 
 const client = generateClient();
 
@@ -107,8 +108,9 @@ export default function HomePage({ user, signOut }) {
     if (statusFilter === "open") data = data.filter(c => !c.closedDate);
     if (statusFilter === "closed") data = data.filter(c => c.closedDate);
 
-    if (signedFilter === "signed") data = data.filter(c => c.contractSigned);
-    if (signedFilter === "unsigned") data = data.filter(c => !c.contractSigned);
+    // ✅ Changed: Use pictureKey instead of contractSigned
+    if (signedFilter === "signed") data = data.filter(c => !!c.pictureKey);
+    if (signedFilter === "unsigned") data = data.filter(c => !c.pictureKey);
 
     if (contractType !== "ALL") {
       data = data.filter(c => c.contractType === contractType);
@@ -121,7 +123,6 @@ export default function HomePage({ user, signOut }) {
           .includes(search.toLowerCase())
       );
     }
-
     setFiltered(data);
   }, [contracts, statusFilter, signedFilter, contractType, search]);
 
@@ -129,8 +130,9 @@ export default function HomePage({ user, signOut }) {
      VIEW FILTER
   ========================= */
   const viewFiltered = filtered.filter(c => {
-    if (activeView === "review") return !c.closedDate && !c.contractSigned;
-    if (activeView === "close") return c.contractSigned && !c.closedDate;
+    // ✅ Changed: Use pictureKey instead of contractSigned
+    if (activeView === "review") return !c.closedDate && !c.pictureKey;
+    if (activeView === "close") return c.pictureKey && !c.closedDate;
     return true;
   });
 
@@ -174,6 +176,7 @@ export default function HomePage({ user, signOut }) {
           { key: "review", label: "Review" },
           { key: "close", label: "Review for Close" },
           { key: "bulk", label: "Bulk Upload" },
+          { key: "reviewlock", label: "Review" }
         ].map(t => (
           <button
             key={t.key}
@@ -193,6 +196,9 @@ export default function HomePage({ user, signOut }) {
 
       {/* BULK UPLOAD */}
       {activeView === "bulk" && <BulkUploadPage />}
+
+      {/* Review and lock contracts */}
+      {activeView === "reviewlock" && <ReviewAndLock />}
 
       {/* CONTRACT VIEWS */}
       {activeView !== "bulk" && (
@@ -300,7 +306,7 @@ export default function HomePage({ user, signOut }) {
                   <td style={{ padding: "12px" }}>{c.name || ""}</td>
                   <td style={{ padding: "12px" }}>{c.contractType}</td>
                   <td style={{ padding: "12px" }}>{c.commodity || ""}</td>
-                  <td style={{ padding: "12px" }}>{c.quantity || ""}</td>
+                  <td style={{ padding: "12px" }}>{c.originalQuantity || ""}</td>
                   <td style={{ padding: "12px" }}>
                     {c.media.map((m, i) => (
                       <button
@@ -319,8 +325,8 @@ export default function HomePage({ user, signOut }) {
                       </button>
                     ))}
                   </td>
-                  <td style={{ padding: "12px" }}>
-                    {c.contractSigned ? "✔" : "✖"}
+                  <td style={{ color: c.pictureKey ? "#238636" : "#d73a49" }}>
+                    {c.pictureKey ? "Signed" : "Unsigned"}
                   </td>
                   <td style={{ padding: "12px" }}>{c.closedDate ?? ""}</td>
                 </tr>
@@ -457,7 +463,7 @@ export default function HomePage({ user, signOut }) {
               {[
                 "BASIS_FIXED",
                 "DEFERRED_PAYMENT",
-                "PRICED_LATER",
+                "PRICE_LATER",
                 "EXTENDED_PRICING",
                 "CASH_BUY",
                 "MINIMUM_PRICED",
@@ -558,12 +564,35 @@ export default function HomePage({ user, signOut }) {
                 Cancel
               </button>
 
-              <button
+              <button style={{ width: "50%", borderRadius: "5", background: "green" }}
                 onClick={async () => {
-                  if (!uploadFile || !uploadContractNumber) return;
+                  if (!uploadFile || !uploadContractNumber || !uploadContractType) return;
+
                   try {
-                    const key = `contracts/${uploadContractNumber}/${uploadPdfType}_${Date.now()}.pdf`;
-                    await uploadData({ path: key, data: uploadFile });
+                    const tempKey = `public/temp/${Date.now()}_${uploadFile.name}`;
+                    await uploadData({ path: tempKey, data: uploadFile });
+
+                    const restOperation = post({
+                      apiName: 'contractsAPI',
+                      path: '/submitEditedContract',
+                      options: {
+                        body: {
+                          sourceKey: tempKey,
+                          contractType: uploadContractType,
+                          contractNumber: uploadContractNumber,
+                          pdfType: uploadPdfType
+                        }
+                      }
+                    });
+
+                    // Amplify v6: unwrap .response, then .body.json()
+                    const { body } = await restOperation.response;
+                    const data = await body.json();
+
+                    if (data.redirected) {
+                      alert(data.message);
+                    }
+
                     setShowUploadContract(false);
                     setUploadFile(null);
                     setUploadPreviewUrl(null);
@@ -571,22 +600,14 @@ export default function HomePage({ user, signOut }) {
                     setUploadContractType("");
                     setUploadPdfType("contract");
                     fetchContracts();
+
                   } catch (err) {
-                    console.error("Upload failed", err);
+                    // Log the full error details
+                    console.error("Upload failed:", JSON.stringify(err), err?.message, err?.response);
+                    alert(`Error: ${err?.message ?? "Unknown — check console"}`);
                   }
                 }}
-                style={{
-                  flex: 1,
-                  padding: "10px 0",
-                  background: !uploadFile || !uploadContractNumber ? "#1a3a22" : "#238636",
-                  color: !uploadFile || !uploadContractNumber ? "#555" : "white",
-                  borderRadius: 6,
-                  border: "none",
-                  fontWeight: "bold",
-                  cursor: !uploadFile || !uploadContractNumber ? "not-allowed" : "pointer",
-                  fontSize: 14,
-                  transition: "background 0.2s",
-                }}
+
               >
                 Upload
               </button>
@@ -608,8 +629,13 @@ export default function HomePage({ user, signOut }) {
                 />
               ) : (
                 <iframe
-                  src={uploadPreviewUrl}
-                  style={{ width: "100%", height: "100%", border: "none" }}
+                  src={`${uploadPreviewUrl}#navpanes=0&toolbar=0&statusbar=0`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    border: "none"
+                  }}
+                  title="Upload Preview"
                 />
               )
             ) : (

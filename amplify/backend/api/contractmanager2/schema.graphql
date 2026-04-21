@@ -8,18 +8,20 @@ type Contract @model @auth(rules: [{allow: public}]) {
   name: String
     @index(name: "byContractName", queryField: "contractsByName")
   location: String
+  commodity: String
   originalQuantity: Float
   contractDate: AWSDate
   remainingQuantity: Float
   netDollars: Float
   closedDate: AWSDate
+   @index(name: "byClosedDate", queryField: "contractsByClosedDate")
   closedBy: String
   settlementReference: String
   markforReview: Boolean
   locked: Boolean  
   pictureKey: String
   transactionKey: String
-  needsTransactionKey: Boolean
+  transactionKeyPages: Int
   addendumKey1: String
   addendumKey2: String
   duplicateKey: AWSJSON
@@ -29,7 +31,7 @@ type Contract @model @auth(rules: [{allow: public}]) {
   enum ContractTypes {
   BASIS_FIXED
   DEFERRED_PAYMENT
-  PRICED_LATER
+  PRICE_LATER
   EXTENDED_PRICING
   CASH_BUY
   MINIMUM_PRICED

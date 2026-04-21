@@ -20,7 +20,7 @@ export const getContract = /* GraphQL */ `
       locked
       pictureKey
       transactionKey
-      needsTransactionKey
+      transactionKeyPages
       addendumKey1
       addendumKey2
       duplicateKey
@@ -56,7 +56,7 @@ export const listContracts = /* GraphQL */ `
         locked
         pictureKey
         transactionKey
-        needsTransactionKey
+        transactionKeyPages
         addendumKey1
         addendumKey2
         duplicateKey
@@ -103,7 +103,7 @@ export const contractsByType = /* GraphQL */ `
         locked
         pictureKey
         transactionKey
-        needsTransactionKey
+        transactionKeyPages
         addendumKey1
         addendumKey2
         duplicateKey
@@ -150,7 +150,7 @@ export const contractsByNumber = /* GraphQL */ `
         locked
         pictureKey
         transactionKey
-        needsTransactionKey
+        transactionKeyPages
         addendumKey1
         addendumKey2
         duplicateKey
@@ -197,7 +197,54 @@ export const contractsByName = /* GraphQL */ `
         locked
         pictureKey
         transactionKey
-        needsTransactionKey
+        transactionKeyPages
+        addendumKey1
+        addendumKey2
+        duplicateKey
+        notes
+        TransactionDates
+        createdAt
+        updatedAt
+        __typename
+      }
+      nextToken
+      __typename
+    }
+  }
+`;
+export const contractsByClosedDate = /* GraphQL */ `
+  query ContractsByClosedDate(
+    $closedDate: AWSDate!
+    $sortDirection: ModelSortDirection
+    $filter: ModelContractFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    contractsByClosedDate(
+      closedDate: $closedDate
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        contractType
+        contractNumber
+        name
+        location
+        originalQuantity
+        contractDate
+        remainingQuantity
+        netDollars
+        closedDate
+        closedBy
+        settlementReference
+        markforReview
+        locked
+        pictureKey
+        transactionKey
+        transactionKeyPages
         addendumKey1
         addendumKey2
         duplicateKey

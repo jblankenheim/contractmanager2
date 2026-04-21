@@ -1,5 +1,7 @@
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { LambdaClient, InvokeCommand } = require("@aws-sdk/client-lambda");
+const lambda = new LambdaClient({});
 const {
   DynamoDBDocumentClient,
   UpdateCommand,
@@ -25,9 +27,6 @@ const REQUIRED_FIELDS = [
 ];
 
 
-// ======================
-// ✅ SAFE CSV NUMBER PARSER
-// ======================
 function parseCsvNumber(value, fieldName, errors) {
   if (value === undefined || value === null) {
     errors.push(`Missing ${fieldName}`);
@@ -59,32 +58,25 @@ async function processInBatches(items, batchSize = 5) {
   return results;
 }
 
-// ======================
-// ✅ LAMBDA HANDLER
-// ======================
 exports.handler = async (event) => {
   try {
-    const body =
-      typeof event.body === "string" ? JSON.parse(event.body) : event.body;
-      const results = await processInBatches(validRows, 5);
-
-const updatedIds = results.filter(r => r.status === "updated").map(r => r.id);
-const closedIds = results.filter(r => r.status === "closed").map(r => r.id);
-
+    const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
     const fileKey = body.file;
+
     if (!fileKey) {
       return response(400, { error: "Missing file key" });
     }
 
+    // 1. Load and parse the CSV
     const csvText = await loadS3File(fileKey);
     const rows = parseCsv(csvText);
 
     const validRows = [];
     const invalidRows = [];
 
+    // 2. Validate the rows and fill validRows array
     for (const rawRow of rows) {
       const validation = validateAndCleanRow(rawRow);
-
       if (!validation.ok) {
         invalidRows.push({
           row: rawRow.__rowNumber,
@@ -95,17 +87,22 @@ const closedIds = results.filter(r => r.status === "closed").map(r => r.id);
       }
     }
 
-    // ✅ FAST, PARALLEL WRITES
-    await processInBatches(validRows, 5);
+    // 3. NOW call the batch processor with the filled validRows
+    const results = await processInBatches(validRows, 5);
+
+    // 4. Calculate the counts for the response
+    const updatedIds = results.filter(r => r.status === "updated").map(r => r.id);
+    const closedIds = results.filter(r => r.status === "closed").map(r => r.id);
 
     return response(200, {
       processed: rows.length,
       valid: validRows.length,
       updatedCount: updatedIds.length,
       closedCount: closedIds.length,
-      closedContractIds: closedIds, // List of IDs that were skipped because they are closed
+      closedContractIds: closedIds,
       invalidRows,
     });
+
   } catch (err) {
     console.error(err);
     return response(500, { error: err.message });
@@ -135,9 +132,7 @@ function parseCsv(data) {
 }
 
 
-// ======================
-// ✅ VALIDATE + CLEAN ROW
-// ======================
+
 function validateAndCleanRow(rawRow) {
   const errors = [];
 
@@ -177,12 +172,13 @@ function validateAndCleanRow(rawRow) {
       contractDate,
       originalQuantity,
       remainingQuantity,
+      commodity: rawRow.commodity?.trim() || null   
     },
   };
 }
 
 
-// ======================
+
 function normalizeAWSDate(value) {
   if (!value) return null;
 
@@ -205,9 +201,6 @@ function normalizeAWSDate(value) {
 }
 
 
-// ======================
-// ✅ SINGLE-CALL ATOMIC UPSERT
-// ======================
 
 async function upsertContract(row) {
   const id = `${row.contractType}_${row.contractNumber}`;
@@ -218,19 +211,20 @@ async function upsertContract(row) {
       new UpdateCommand({
         TableName: TABLE_NAME,
         Key: { id },
-        // ✅ Check that both closedBy and closedDate do NOT exist
+       
         ConditionExpression: "attribute_not_exists(closedBy) AND attribute_not_exists(closedDate)",
         UpdateExpression: `
-          SET contractType = :contractType,
-              contractNumber = :contractNumber,
-              #name = :name,
-              #location = :location,
-              contractDate = :contractDate,
-              originalQuantity = :originalQuantity,
-              remainingQuantity = :remainingQuantity,
-              updatedAt = :updatedAt,
-              createdAt = if_not_exists(createdAt, :createdAt)
-        `,
+  SET contractType = :contractType,
+      contractNumber = :contractNumber,
+      #name = :name,
+      #location = :location,
+      contractDate = :contractDate,
+      originalQuantity = :originalQuantity,
+      remainingQuantity = :remainingQuantity,
+      commodity = :commodity,        
+      updatedAt = :updatedAt,
+      createdAt = if_not_exists(createdAt, :createdAt)
+`,
         ExpressionAttributeNames: {
           "#name": "name",
           "#location": "location",
@@ -243,6 +237,7 @@ async function upsertContract(row) {
           ":contractDate": row.contractDate,
           ":originalQuantity": row.originalQuantity,
           ":remainingQuantity": row.remainingQuantity,
+          ":commodity": row.commodity,
           ":updatedAt": now,
           ":createdAt": now,
         },
@@ -251,14 +246,14 @@ async function upsertContract(row) {
     return { id, status: "updated" };
   } catch (err) {
     if (err.name === "ConditionalCheckFailedException") {
-      // ✅ Return as closed if the condition failed
+
       return { id, status: "closed" };
     }
-    throw err; // Re-throw other errors (like network/permission issues)
+    throw err; 
   }
 }
 
-// ======================
+
 function response(statusCode, body) {
   return {
     statusCode,
