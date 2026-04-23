@@ -7,6 +7,7 @@ import { post } from "aws-amplify/api";
 import { uploadData } from "aws-amplify/storage";
 import logo from "./assets/CFE_Logo.png";
 import ReviewAndLock from "./ReviewAndLock";
+import ReviewForClose from "./ReviewForClose";
 
 const client = generateClient();
 
@@ -47,20 +48,18 @@ export default function HomePage({ user, signOut }) {
      FETCH CONTRACTS
   ========================= */
   useEffect(() => {
-    fetchContracts();
-  }, []);
+  fetchContracts();
+}, []);
 
-  async function fetchContracts() {
-    const res = await client.graphql({
-      query: listContracts,
-      variables: { limit: 1000 },
-    });
+async function fetchContracts() {
+  try {
+    // 1. Fetch and sort the data
+    const allItems = await fetchAllContracts();
 
-    const items = res?.data?.listContracts?.items ?? [];
-
+    // 2. Process media for those items
     const withMedia = await Promise.all(
-      items.map(async c => {
-        const parseKey = key => {
+      allItems.map(async (c) => {
+        const parseKey = (key) => {
           if (!key) return null;
           try {
             const parsed = JSON.parse(key);
@@ -81,7 +80,7 @@ export default function HomePage({ user, signOut }) {
           .filter(Boolean);
 
         const media = await Promise.all(
-          keys.map(async key => {
+          keys.map(async (key) => {
             const { url } = await getUrl({ path: key });
             const u = url.toString();
             return {
@@ -90,18 +89,41 @@ export default function HomePage({ user, signOut }) {
             };
           })
         );
-
         return { ...c, media };
       })
     );
 
+    // 3. Update state
     setContracts(withMedia);
     setFiltered(withMedia);
+  } catch (err) {
+    console.error("Error in fetchContracts:", err);
   }
+}
 
-  /* =========================
-     FILTER BAR LOGIC
-  ========================= */
+async function fetchAllContracts() {
+  let allItems = [];
+  let nextToken = null;
+  try {
+    do {
+      const res = await client.graphql({
+        query: listContracts,
+        variables: { limit: 1000, nextToken: nextToken },
+      });
+      const items = res.data.listContracts.items;
+      allItems = [...allItems, ...items];
+      nextToken = res.data.listContracts.nextToken;
+    } while (nextToken);
+
+    return allItems.sort((a, b) =>
+      (b.contractNumber || "").localeCompare(a.contractNumber || "")
+    );
+  } catch (err) {
+    console.error("Batch fetch failed", err);
+    return []; // Return empty array on failure to prevent map errors
+  }
+}
+/* ========================= FILTER BAR LOGIC ========================= */
   useEffect(() => {
     let data = [...contracts];
 
@@ -203,7 +225,7 @@ export default function HomePage({ user, signOut }) {
       {activeView === "reviewlock" && <ReviewAndLock />}
       {/* BULK UPLOAD */}
       {activeView === "bulk" && <BulkUploadPage />}
-
+        {activeView === "close" && <ReviewForClose contracts={contracts} />}
 
 
       {/* CONTRACT VIEWS */}

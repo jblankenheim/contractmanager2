@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "api": {
+      "contractmanager2": [
+        "Query",
+        "Mutation",
+        "Subscription"
+      ]
+    },
+    "function": {
+      "submitEditedContractLambda": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    },
+    "storage": {
+      "s3contractmanager2storage87f59124": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    }
+  },
+  "lambdaLayers": []
+}

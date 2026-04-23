@@ -14,9 +14,9 @@ export const handler = async (event) => {
     }
 
     try {
-        // 1. Fetch the Contract
+        
         const getParams = {
-            TableName: "ContractsTable",
+            TableName: "Contract-q45dzeansvb35iprjcnjiiszhy-dev",
             Key: { id: contractID },
         };
         const { Item: contract } = await docClient.send(new GetCommand(getParams));
@@ -77,4 +77,3 @@ export const handler = async (event) => {
         };
     }
 };
-

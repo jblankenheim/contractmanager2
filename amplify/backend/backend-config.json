@@ -103,6 +103,62 @@
   "function": {
     "S3Trigger6c4edd56": {
       "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "contractmanager2"
+        },
+        {
+          "attributes": [
+            "ApiName",
+            "ApiId"
+          ],
+          "category": "api",
+          "resourceName": "contractsAPI"
+        },
+        {
+          "attributes": [
+            "Name"
+          ],
+          "category": "function",
+          "resourceName": "submitEditedContractLambda"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "bulkContractProcess": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "contractmanager2"
+        },
+        {
+          "attributes": [
+            "Name"
+          ],
+          "category": "function",
+          "resourceName": "submitEditedContractLambda"
+        },
+        {
+          "attributes": [
+            "BucketName"
+          ],
+          "category": "storage",
+          "resourceName": "s3contractmanager2storage87f59124"
+        }
+      ],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
     },
@@ -257,120 +313,6 @@
       ],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
-    }
-  },
-  "parameters": {
-    "AMPLIFY_function_S3Trigger6c4edd56_deploymentBucketName": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "S3Trigger6c4edd56"
-        }
-      ]
-    },
-    "AMPLIFY_function_S3Trigger6c4edd56_s3Key": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "S3Trigger6c4edd56"
-        }
-      ]
-    },
-    "AMPLIFY_function_closeContract_deploymentBucketName": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "closeContract"
-        }
-      ]
-    },
-    "AMPLIFY_function_closeContract_s3Key": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "closeContract"
-        }
-      ]
-    },
-    "AMPLIFY_function_rawContractData_deploymentBucketName": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "rawContractData"
-        }
-      ]
-    },
-    "AMPLIFY_function_rawContractData_s3Key": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "rawContractData"
-        }
-      ]
-    },
-    "AMPLIFY_function_rawTransactionsData_deploymentBucketName": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "rawTransactionsData"
-        }
-      ]
-    },
-    "AMPLIFY_function_rawTransactionsData_s3Key": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "rawTransactionsData"
-        }
-      ]
-    },
-    "AMPLIFY_function_runTransactions_deploymentBucketName": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "runTransactions"
-        }
-      ]
-    },
-    "AMPLIFY_function_runTransactions_s3Key": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "runTransactions"
-        }
-      ]
-    },
-    "AMPLIFY_function_submitEditedContractLambda_deploymentBucketName": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "submitEditedContractLambda"
-        }
-      ]
-    },
-    "AMPLIFY_function_submitEditedContractLambda_s3Key": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "submitEditedContractLambda"
-        }
-      ]
-    },
-    "AMPLIFY_function_transactionPDFGen_deploymentBucketName": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "transactionPDFGen"
-        }
-      ]
-    },
-    "AMPLIFY_function_transactionPDFGen_s3Key": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "transactionPDFGen"
-        }
-      ]
     }
   },
   "storage": {

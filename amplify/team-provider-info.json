@@ -48,11 +48,15 @@
         },
         "runTransactions": {
           "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
-          "s3Key": "amplify-builds/runTransactions-6438723048526e465276-build.zip"
+          "s3Key": "amplify-builds/runTransactions-555945306c78734d7365-build.zip"
         },
         "closeContract": {
           "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
           "s3Key": "amplify-builds/closeContract-6b66315a563079704e72-build.zip"
+        },
+        "bulkContractProcess": {
+          "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
+          "s3Key": "amplify-builds/bulkContractProcess-575974767645515a356b-build.zip"
         }
       }
     }
