@@ -6,16 +6,18 @@ import { post } from "aws-amplify/api";
 const TABS = [
   { key: "contracts", label: "Contract Data" },
   { key: "transactions", label: "Transaction Data" },
+  { key: "pdfs", label: "Contract PDFs" }, // New Tab
 ];
 
 const S3_PREFIX = {
   contracts: "public/bulk/contracts/",
   transactions: "public/bulk/transactions/",
+  pdfs: "public/bulkPDF/", // New Prefix
 };
 
 const API_NAME = "contractsAPI";
 
-// ─── Styles (Defined here so they are accessible to all functions) ──────────
+// ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = {
   root: { padding: "24px 20px", color: "white", fontFamily: "inherit" },
   heading: { fontSize: 20, fontWeight: 600, marginBottom: 20, color: "#e6edf3" },
@@ -52,7 +54,10 @@ const styles = {
   td: { padding: "10px 14px", borderBottom: "1px solid #21262d", color: "#c9d1d9" },
   emptyRow: { textAlign: "center", padding: "24px", color: "#555", fontSize: 13 },
   toast: (type) => ({
-    marginTop: 4, padding: "10px 16px", borderRadius: 6, fontSize: 13,
+    marginTop: 4,
+    padding: "10px 16px",
+    borderRadius: 6,
+    fontSize: 13,
     background: type === "success" ? "#1a3a2a" : "#3a1a1a",
     color: type === "success" ? "#3fb950" : "#f85149",
     border: `1px solid ${type === "success" ? "#238636" : "#da3633"}`,
@@ -91,16 +96,21 @@ function BulkTab({ tabKey }) {
   const API_PATHS = {
     contracts: "/rawContractData",
     transactions: "/rawTransactionsData",
+    pdfs: null, // PDFs don't use a processing API in this requirement
   };
 
-  useEffect(() => { loadS3Files(); }, [tabKey]);
+  useEffect(() => {
+    loadS3Files();
+  }, [tabKey]);
 
   async function loadS3Files() {
     try {
       const result = await list({ path: S3_PREFIX[tabKey] });
       const items = (result?.items ?? []).filter(item => item.path !== S3_PREFIX[tabKey]);
       setS3Files(items);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   function handlePickFiles(e) {
@@ -114,14 +124,25 @@ function BulkTab({ tabKey }) {
     setUploading(true);
     try {
       await Promise.all(pendingFiles.map(async (file) => {
-        const key = `${S3_PREFIX[tabKey]}${file.name}`;
-        await uploadData({ path: key, data: file }).result;
+        // Append Date.now() to filename for PDFs tab, use standard for others
+        const fileName = tabKey === 'pdfs' ? `${Date.now()}-${file.name}` : file.name;
+        const key = `${S3_PREFIX[tabKey]}${fileName}`;
+        
+        await uploadData({ 
+          path: key, 
+          data: file,
+          options: { contentType: file.type } 
+        }).result;
       }));
+      
       setToast({ type: "success", message: "Uploads complete!" });
       setPendingFiles([]);
       await loadS3Files();
-    } catch (err) { setToast({ type: "error", message: "Upload failed." }); }
-    finally { setUploading(false); }
+    } catch (err) {
+      setToast({ type: "error", message: "Upload failed." });
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function handleDelete(path) {
@@ -130,7 +151,9 @@ function BulkTab({ tabKey }) {
       await remove({ path });
       if (selectedFile === path) setSelectedFile(null);
       await loadS3Files();
-    } catch (err) { setToast({ type: "error", message: "Delete failed." }); }
+    } catch (err) {
+      setToast({ type: "error", message: "Delete failed." });
+    }
   }
 
   async function handleSubmit() {
@@ -145,8 +168,11 @@ function BulkTab({ tabKey }) {
       const resJson = await response.body.json();
       setToast({ type: "success", message: resJson.message || "Processed!" });
       setSelectedFile(null);
-    } catch (err) { setToast({ type: "error", message: "Failed." }); }
-    finally { setSubmitting(false); }
+    } catch (err) {
+      setToast({ type: "error", message: "Failed." });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function formatSize(bytes) {
@@ -158,16 +184,31 @@ function BulkTab({ tabKey }) {
   return (
     <div style={styles.section}>
       <div style={styles.uploadRow}>
-        <input type="file" ref={fileInputRef} style={{ display: "none" }} multiple onChange={handlePickFiles} />
-        <button style={styles.uploadBtn} onClick={() => fileInputRef.current.click()}>Pick Files</button>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          style={{ display: "none" }} 
+          multiple 
+          accept={tabKey === 'pdfs' ? "application/pdf,image/*" : ".csv,.json"}
+          onChange={handlePickFiles} 
+        />
+        
+        <button style={styles.uploadBtn} onClick={() => fileInputRef.current.click()}>
+          {tabKey === 'pdfs' ? "Pick PDFs/Images" : "Pick Files"}
+        </button>
+
         {pendingFiles.length > 0 && (
           <button style={styles.submitBtn(uploading)} onClick={handleUpload}>
             {uploading ? "Uploading..." : `Upload to S3 (${pendingFiles.length})`}
           </button>
         )}
-        <button style={styles.submitBtn(!selectedFile || submitting)} onClick={handleSubmit}>
-          {submitting ? "Processing..." : `Process ${tabKey}`}
-        </button>
+
+        {/* Hide "Process" button for PDFs tab since they are just storage targets */}
+        {tabKey !== 'pdfs' && (
+          <button style={styles.submitBtn(!selectedFile || submitting)} onClick={handleSubmit}>
+            {submitting ? "Processing..." : `Process ${tabKey}`}
+          </button>
+        )}
       </div>
 
       {toast && <div style={styles.toast(toast.type)}>{toast.message}</div>}
@@ -176,7 +217,7 @@ function BulkTab({ tabKey }) {
         <table style={styles.table}>
           <thead>
             <tr>
-              <th style={{ width: 40 }}>Select</th>
+              <th style={{ width: 40 }}>{tabKey !== 'pdfs' ? 'Select' : '#'}</th>
               <th style={styles.th}>Filename</th>
               <th style={styles.th}>Size</th>
               <th style={styles.th}>Action</th>
@@ -186,13 +227,28 @@ function BulkTab({ tabKey }) {
             {s3Files.length === 0 ? (
               <tr><td colSpan="4" style={styles.emptyRow}>No files found.</td></tr>
             ) : (
-              s3Files.map((file) => (
-                <tr key={file.path} style={styles.tr(selectedFile === file.path)} onClick={() => setSelectedFile(file.path === selectedFile ? null : file.path)}>
-                  <td style={styles.td}><input type="checkbox" checked={selectedFile === file.path} readOnly /></td>
+              s3Files.map((file, idx) => (
+                <tr 
+                  key={file.path} 
+                  style={styles.tr(selectedFile === file.path)} 
+                  onClick={() => tabKey !== 'pdfs' && setSelectedFile(file.path === selectedFile ? null : file.path)}
+                >
+                  <td style={styles.td}>
+                    {tabKey !== 'pdfs' ? (
+                      <input type="checkbox" checked={selectedFile === file.path} readOnly />
+                    ) : (
+                      idx + 1
+                    )}
+                  </td>
                   <td style={styles.td}>{file.path.split('/').pop()}</td>
                   <td style={styles.td}>{formatSize(file.size)}</td>
                   <td style={styles.td}>
-                    <button style={{ ...styles.uploadBtn, background: '#30363d', color: '#f85149', padding: '6px 12px' }} onClick={(e) => { e.stopPropagation(); handleDelete(file.path); }}>Delete</button>
+                    <button 
+                      style={{ ...styles.uploadBtn, background: '#30363d', color: '#f85149', padding: '6px 12px' }} 
+                      onClick={(e) => { e.stopPropagation(); handleDelete(file.path); }}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))

@@ -39,6 +39,32 @@
           "delete"
         ]
       }
+    },
+    "/closeCancel": {
+      "name": "/closeCancel",
+      "lambdaFunction": "closeContract",
+      "permissions": {
+        "setting": "private",
+        "auth": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      }
+    },
+    "/runTransactions": {
+      "name": "/runTransactions",
+      "lambdaFunction": "runTransactions",
+      "permissions": {
+        "setting": "private",
+        "auth": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      }
     }
   }
 }

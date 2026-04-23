@@ -173,14 +173,20 @@ export default function HomePage({ user, signOut }) {
       <div style={{ display: "flex", gap: 12, margin: "20px 0" }}>
         {[
           { key: "contracts", label: "Contracts" },
-          { key: "review", label: "Review" },
+          { key: "reviewlock", label: "Review" },
           { key: "close", label: "Review for Close" },
           { key: "bulk", label: "Bulk Upload" },
-          { key: "reviewlock", label: "Review" }
+
         ].map(t => (
           <button
             key={t.key}
-            onClick={() => setActiveView(t.key)}
+            onClick={() => {
+              setActiveView(t.key);
+
+              if (t.key === "contracts") {
+                fetchContracts();
+              }
+            }}
             style={{
               minWidth: 180,
               padding: "12px 18px",
@@ -193,12 +199,12 @@ export default function HomePage({ user, signOut }) {
           </button>
         ))}
       </div>
-
+      {/* Review and lock contracts */}
+      {activeView === "reviewlock" && <ReviewAndLock />}
       {/* BULK UPLOAD */}
       {activeView === "bulk" && <BulkUploadPage />}
 
-      {/* Review and lock contracts */}
-      {activeView === "reviewlock" && <ReviewAndLock />}
+
 
       {/* CONTRACT VIEWS */}
       {activeView !== "bulk" && (
@@ -283,7 +289,7 @@ export default function HomePage({ user, signOut }) {
                 <tr
                   key={c.id}
                   onClick={() => {
-                    const pdfs = c.media.filter(m => m.type === "pdf");
+                    const pdfs = c.media.filter((m) => m.type === "pdf");
                     if (pdfs.length) {
                       setActiveContractMedia({ pdfs, activeIndex: 0 });
                     }
@@ -294,12 +300,11 @@ export default function HomePage({ user, signOut }) {
                     borderLeft: "4px solid #1f6feb",
                     transition: "all 0.2s ease",
                   }}
-                  onMouseEnter={e => {
+                  onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = "#1a2a3a";
                   }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.backgroundColor =
-                      index % 2 === 0 ? "#111" : "#1b1b1b";
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = index % 2 === 0 ? "#111" : "#1b1b1b";
                   }}
                 >
                   <td style={{ padding: "12px" }}>{c.contractNumber}</td>
@@ -311,12 +316,8 @@ export default function HomePage({ user, signOut }) {
                     {c.media.map((m, i) => (
                       <button
                         key={i}
-                        style={{
-                          marginRight: 4,
-                          fontSize: "11px",
-                          padding: "2px 6px",
-                        }}
-                        onClick={e => {
+                        style={{ marginRight: 4, fontSize: "11px", padding: "2px 6px" }}
+                        onClick={(e) => {
                           e.stopPropagation();
                           setActiveMedia(m);
                         }}
@@ -325,10 +326,26 @@ export default function HomePage({ user, signOut }) {
                       </button>
                     ))}
                   </td>
-                  <td style={{ color: c.pictureKey ? "#238636" : "#d73a49" }}>
+                  <td style={{ color: c.pictureKey ? "#238636" : "#d73a49", padding: "12px" }}>
                     {c.pictureKey ? "Signed" : "Unsigned"}
                   </td>
                   <td style={{ padding: "12px" }}>{c.closedDate ?? ""}</td>
+
+                  {/* New Notes Field */}
+                  <td style={{ padding: "12px", textAlign: "center" }}>
+                    {c.notes ? (
+                      <span
+                        title={c.notes}
+                        style={{ cursor: "help", fontSize: "18px" }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          alert(c.notes);
+                        }}
+                      >
+                        📝
+                      </span>
+                    ) : null}
+                  </td>
                 </tr>
               ))}
             </tbody>

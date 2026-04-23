@@ -47,6 +47,22 @@
           ],
           "category": "function",
           "resourceName": "rawTransactionsData"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "closeContract"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "runTransactions"
         }
       ],
       "providerPlugin": "awscloudformation",
@@ -87,6 +103,29 @@
   "function": {
     "S3Trigger6c4edd56": {
       "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "closeContract": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "contractmanager2"
+        },
+        {
+          "attributes": [
+            "BucketName"
+          ],
+          "category": "storage",
+          "resourceName": "s3contractmanager2storage87f59124"
+        }
+      ],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
     },
@@ -138,6 +177,29 @@
           ],
           "category": "storage",
           "resourceName": "s3contractmanager2storage87f59124"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "runTransactions": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "contractmanager2"
+        },
+        {
+          "attributes": [
+            "Name"
+          ],
+          "category": "function",
+          "resourceName": "transactionPDFGen"
         }
       ],
       "providerPlugin": "awscloudformation",
@@ -214,6 +276,22 @@
         }
       ]
     },
+    "AMPLIFY_function_closeContract_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "closeContract"
+        }
+      ]
+    },
+    "AMPLIFY_function_closeContract_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "closeContract"
+        }
+      ]
+    },
     "AMPLIFY_function_rawContractData_deploymentBucketName": {
       "usedBy": [
         {
@@ -243,6 +321,22 @@
         {
           "category": "function",
           "resourceName": "rawTransactionsData"
+        }
+      ]
+    },
+    "AMPLIFY_function_runTransactions_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "runTransactions"
+        }
+      ]
+    },
+    "AMPLIFY_function_runTransactions_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "runTransactions"
         }
       ]
     },

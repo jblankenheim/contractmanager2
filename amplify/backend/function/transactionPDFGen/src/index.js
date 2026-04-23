@@ -32,48 +32,46 @@ exports.handler = async (event) => {
             transactionKeyPages = 0 
         } = contract;
 
-        // ==================================================
-        // STEP 1: GENERATE TRANSACTIONS PDF
-        // ==================================================
-        const transDoc = await PDFDocument.create();
-        const font = await transDoc.embedFont(StandardFonts.Courier);
-        const boldFont = await transDoc.embedFont(StandardFonts.CourierBold);
+const transDoc = await PDFDocument.create();
+const font = await transDoc.embedFont(StandardFonts.Courier);
+const boldFont = await transDoc.embedFont(StandardFonts.CourierBold);
 
-        let currentPage = transDoc.addPage();
-        let { width, height } = currentPage.getSize();
-        let y = height - 50;
+let currentPage = transDoc.addPage();
+let { width, height } = currentPage.getSize();
+let y = height - 50;
 
-        // Header
-        currentPage.drawText(`Transactions for contract ID: ${id}`, { 
-            x: 50, y, size: 14, font: boldFont 
-        });
-        y -= 40;
+// Header
+currentPage.drawText(`Transactions for contract ID: ${id}`, { x: 50, y, size: 14, font: boldFont });
+y -= 40;
 
-        // Table Header
-        currentPage.drawText(
-          "Date         Quantity       Remaining     Dollars       Check#", 
-          { x: 50, y, size: 10, font: boldFont }
-        );
-        y -= 20;
+// Table Header - Updated to include Settled To
+// Adjusted spacing: Date(12), Qty(10), Rem(10), Dol(10), Settled(15), Check#(10)
+currentPage.drawText(
+    "Date         Quantity  Remaining Dollars   Settled To      Check#", 
+    { x: 50, y, size: 10, font: boldFont }
+);
+y -= 20;
 
-        // Table Rows
-        (transactionDates || []).forEach(t => {
-          const dateStr = String(t.date || '').padEnd(12);
-          const qtyStr = String(t.quantity || '').padEnd(14);
-          const remStr = String(t.remainingQuantity || '').padEnd(12);
-          const dolStr = String(t.dollars || '').padEnd(12);
-          const chkStr = String(t.checkNumber || '');
+// Table Rows
+(transactionDates || []).forEach(t => {
+    const dateStr = String(t.date || '').padEnd(13);
+    const qtyStr  = String(t.quantity || '').padEnd(10);
+    const remStr  = String(t.remainingQuantity || '').padEnd(10);
+    const dolStr  = String(t.dollars || '').padEnd(10);
+    // New Field
+    const setStr  = String(t.settledTo || '').substring(0, 14).padEnd(16); 
+    const chkStr  = String(t.checkNumber || '');
 
-          const line = `${dateStr} ${qtyStr} ${remStr} ${dolStr} ${chkStr}`;
+    const line = `${dateStr}${qtyStr}${remStr}${dolStr}${setStr}${chkStr}`;
+    
+    currentPage.drawText(line, { x: 50, y, size: 10, font });
+    y -= 14;
 
-          currentPage.drawText(line, { x: 50, y, size: 10, font });
-          y -= 14;
-
-          if (y < 50) {
-            currentPage = transDoc.addPage();
-            y = height - 50;
-          }
-        });
+    if (y < 50) {
+        currentPage = transDoc.addPage();
+        y = height - 50;
+    }
+});
 
         const transPdfBytes = await transDoc.save();
         const newTransPageCount = transDoc.getPageCount();

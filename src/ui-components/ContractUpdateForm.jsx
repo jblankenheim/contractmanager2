@@ -37,12 +37,15 @@ export default function ContractUpdateForm(props) {
     contractNumber: "",
     name: "",
     location: "",
+    commodity: "",
     originalQuantity: "",
     contractDate: "",
     remainingQuantity: "",
     netDollars: "",
+    contractDue: "",
     closedDate: "",
     closedBy: "",
+    canceledDate: "",
     settlementReference: "",
     markforReview: false,
     locked: false,
@@ -63,6 +66,7 @@ export default function ContractUpdateForm(props) {
   );
   const [name, setName] = React.useState(initialValues.name);
   const [location, setLocation] = React.useState(initialValues.location);
+  const [commodity, setCommodity] = React.useState(initialValues.commodity);
   const [originalQuantity, setOriginalQuantity] = React.useState(
     initialValues.originalQuantity
   );
@@ -73,8 +77,14 @@ export default function ContractUpdateForm(props) {
     initialValues.remainingQuantity
   );
   const [netDollars, setNetDollars] = React.useState(initialValues.netDollars);
+  const [contractDue, setContractDue] = React.useState(
+    initialValues.contractDue
+  );
   const [closedDate, setClosedDate] = React.useState(initialValues.closedDate);
   const [closedBy, setClosedBy] = React.useState(initialValues.closedBy);
+  const [canceledDate, setCanceledDate] = React.useState(
+    initialValues.canceledDate
+  );
   const [settlementReference, setSettlementReference] = React.useState(
     initialValues.settlementReference
   );
@@ -111,12 +121,15 @@ export default function ContractUpdateForm(props) {
     setContractNumber(cleanValues.contractNumber);
     setName(cleanValues.name);
     setLocation(cleanValues.location);
+    setCommodity(cleanValues.commodity);
     setOriginalQuantity(cleanValues.originalQuantity);
     setContractDate(cleanValues.contractDate);
     setRemainingQuantity(cleanValues.remainingQuantity);
     setNetDollars(cleanValues.netDollars);
+    setContractDue(cleanValues.contractDue);
     setClosedDate(cleanValues.closedDate);
     setClosedBy(cleanValues.closedBy);
+    setCanceledDate(cleanValues.canceledDate);
     setSettlementReference(cleanValues.settlementReference);
     setMarkforReview(cleanValues.markforReview);
     setLocked(cleanValues.locked);
@@ -161,12 +174,15 @@ export default function ContractUpdateForm(props) {
     contractNumber: [],
     name: [],
     location: [],
+    commodity: [],
     originalQuantity: [],
     contractDate: [],
     remainingQuantity: [],
     netDollars: [],
+    contractDue: [],
     closedDate: [],
     closedBy: [],
+    canceledDate: [],
     settlementReference: [],
     markforReview: [],
     locked: [],
@@ -209,12 +225,15 @@ export default function ContractUpdateForm(props) {
           contractNumber: contractNumber ?? null,
           name: name ?? null,
           location: location ?? null,
+          commodity: commodity ?? null,
           originalQuantity: originalQuantity ?? null,
           contractDate: contractDate ?? null,
           remainingQuantity: remainingQuantity ?? null,
           netDollars: netDollars ?? null,
+          contractDue: contractDue ?? null,
           closedDate: closedDate ?? null,
           closedBy: closedBy ?? null,
+          canceledDate: canceledDate ?? null,
           settlementReference: settlementReference ?? null,
           markforReview: markforReview ?? null,
           locked: locked ?? null,
@@ -290,12 +309,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -375,12 +397,15 @@ export default function ContractUpdateForm(props) {
               contractNumber: value,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -419,12 +444,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name: value,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -463,12 +491,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location: value,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -495,6 +526,53 @@ export default function ContractUpdateForm(props) {
         {...getOverrideProps(overrides, "location")}
       ></TextField>
       <TextField
+        label="Commodity"
+        isRequired={false}
+        isReadOnly={false}
+        value={commodity}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              contractType,
+              contractNumber,
+              name,
+              location,
+              commodity: value,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
+              contractDue,
+              closedDate,
+              closedBy,
+              canceledDate,
+              settlementReference,
+              markforReview,
+              locked,
+              pictureKey,
+              transactionKey,
+              transactionKeyPages,
+              addendumKey1,
+              addendumKey2,
+              duplicateKey,
+              notes,
+              TransactionDates,
+            };
+            const result = onChange(modelFields);
+            value = result?.commodity ?? value;
+          }
+          if (errors.commodity?.hasError) {
+            runValidationTasks("commodity", value);
+          }
+          setCommodity(value);
+        }}
+        onBlur={() => runValidationTasks("commodity", commodity)}
+        errorMessage={errors.commodity?.errorMessage}
+        hasError={errors.commodity?.hasError}
+        {...getOverrideProps(overrides, "commodity")}
+      ></TextField>
+      <TextField
         label="Original quantity"
         isRequired={false}
         isReadOnly={false}
@@ -511,12 +589,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity: value,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -556,12 +637,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate: value,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -604,12 +688,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity: value,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -654,12 +741,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars: value,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -686,6 +776,54 @@ export default function ContractUpdateForm(props) {
         {...getOverrideProps(overrides, "netDollars")}
       ></TextField>
       <TextField
+        label="Contract due"
+        isRequired={false}
+        isReadOnly={false}
+        type="date"
+        value={contractDue}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              contractType,
+              contractNumber,
+              name,
+              location,
+              commodity,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
+              contractDue: value,
+              closedDate,
+              closedBy,
+              canceledDate,
+              settlementReference,
+              markforReview,
+              locked,
+              pictureKey,
+              transactionKey,
+              transactionKeyPages,
+              addendumKey1,
+              addendumKey2,
+              duplicateKey,
+              notes,
+              TransactionDates,
+            };
+            const result = onChange(modelFields);
+            value = result?.contractDue ?? value;
+          }
+          if (errors.contractDue?.hasError) {
+            runValidationTasks("contractDue", value);
+          }
+          setContractDue(value);
+        }}
+        onBlur={() => runValidationTasks("contractDue", contractDue)}
+        errorMessage={errors.contractDue?.errorMessage}
+        hasError={errors.contractDue?.hasError}
+        {...getOverrideProps(overrides, "contractDue")}
+      ></TextField>
+      <TextField
         label="Closed date"
         isRequired={false}
         isReadOnly={false}
@@ -699,12 +837,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate: value,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -743,12 +884,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy: value,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -775,6 +919,54 @@ export default function ContractUpdateForm(props) {
         {...getOverrideProps(overrides, "closedBy")}
       ></TextField>
       <TextField
+        label="Canceled date"
+        isRequired={false}
+        isReadOnly={false}
+        type="date"
+        value={canceledDate}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              contractType,
+              contractNumber,
+              name,
+              location,
+              commodity,
+              originalQuantity,
+              contractDate,
+              remainingQuantity,
+              netDollars,
+              contractDue,
+              closedDate,
+              closedBy,
+              canceledDate: value,
+              settlementReference,
+              markforReview,
+              locked,
+              pictureKey,
+              transactionKey,
+              transactionKeyPages,
+              addendumKey1,
+              addendumKey2,
+              duplicateKey,
+              notes,
+              TransactionDates,
+            };
+            const result = onChange(modelFields);
+            value = result?.canceledDate ?? value;
+          }
+          if (errors.canceledDate?.hasError) {
+            runValidationTasks("canceledDate", value);
+          }
+          setCanceledDate(value);
+        }}
+        onBlur={() => runValidationTasks("canceledDate", canceledDate)}
+        errorMessage={errors.canceledDate?.errorMessage}
+        hasError={errors.canceledDate?.hasError}
+        {...getOverrideProps(overrides, "canceledDate")}
+      ></TextField>
+      <TextField
         label="Settlement reference"
         isRequired={false}
         isReadOnly={false}
@@ -787,12 +979,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference: value,
               markforReview,
               locked,
@@ -833,12 +1028,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview: value,
               locked,
@@ -877,12 +1075,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked: value,
@@ -921,12 +1122,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -965,12 +1169,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -1013,12 +1220,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -1059,12 +1269,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -1103,12 +1316,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -1147,12 +1363,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -1191,12 +1410,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,
@@ -1235,12 +1457,15 @@ export default function ContractUpdateForm(props) {
               contractNumber,
               name,
               location,
+              commodity,
               originalQuantity,
               contractDate,
               remainingQuantity,
               netDollars,
+              contractDue,
               closedDate,
               closedBy,
+              canceledDate,
               settlementReference,
               markforReview,
               locked,

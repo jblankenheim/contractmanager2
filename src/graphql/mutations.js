@@ -12,12 +12,15 @@ export const createContract = /* GraphQL */ `
       contractNumber
       name
       location
+      commodity
       originalQuantity
       contractDate
       remainingQuantity
       netDollars
+      contractDue
       closedDate
       closedBy
+      canceledDate
       settlementReference
       markforReview
       locked
@@ -46,12 +49,15 @@ export const updateContract = /* GraphQL */ `
       contractNumber
       name
       location
+      commodity
       originalQuantity
       contractDate
       remainingQuantity
       netDollars
+      contractDue
       closedDate
       closedBy
+      canceledDate
       settlementReference
       markforReview
       locked
@@ -80,12 +86,15 @@ export const deleteContract = /* GraphQL */ `
       contractNumber
       name
       location
+      commodity
       originalQuantity
       contractDate
       remainingQuantity
       netDollars
+      contractDue
       closedDate
       closedBy
+      canceledDate
       settlementReference
       markforReview
       locked

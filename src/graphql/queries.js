@@ -9,12 +9,15 @@ export const getContract = /* GraphQL */ `
       contractNumber
       name
       location
+      commodity
       originalQuantity
       contractDate
       remainingQuantity
       netDollars
+      contractDue
       closedDate
       closedBy
+      canceledDate
       settlementReference
       markforReview
       locked
@@ -45,12 +48,15 @@ export const listContracts = /* GraphQL */ `
         contractNumber
         name
         location
+        commodity
         originalQuantity
         contractDate
         remainingQuantity
         netDollars
+        contractDue
         closedDate
         closedBy
+        canceledDate
         settlementReference
         markforReview
         locked
@@ -92,12 +98,15 @@ export const contractsByType = /* GraphQL */ `
         contractNumber
         name
         location
+        commodity
         originalQuantity
         contractDate
         remainingQuantity
         netDollars
+        contractDue
         closedDate
         closedBy
+        canceledDate
         settlementReference
         markforReview
         locked
@@ -139,12 +148,15 @@ export const contractsByNumber = /* GraphQL */ `
         contractNumber
         name
         location
+        commodity
         originalQuantity
         contractDate
         remainingQuantity
         netDollars
+        contractDue
         closedDate
         closedBy
+        canceledDate
         settlementReference
         markforReview
         locked
@@ -186,12 +198,15 @@ export const contractsByName = /* GraphQL */ `
         contractNumber
         name
         location
+        commodity
         originalQuantity
         contractDate
         remainingQuantity
         netDollars
+        contractDue
         closedDate
         closedBy
+        canceledDate
         settlementReference
         markforReview
         locked
@@ -233,12 +248,15 @@ export const contractsByClosedDate = /* GraphQL */ `
         contractNumber
         name
         location
+        commodity
         originalQuantity
         contractDate
         remainingQuantity
         netDollars
+        contractDue
         closedDate
         closedBy
+        canceledDate
         settlementReference
         markforReview
         locked

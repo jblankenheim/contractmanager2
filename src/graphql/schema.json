@@ -389,6 +389,17 @@
           "isDeprecated" : false,
           "deprecationReason" : null
         }, {
+          "name" : "commodity",
+          "description" : null,
+          "args" : [ ],
+          "type" : {
+            "kind" : "SCALAR",
+            "name" : "String",
+            "ofType" : null
+          },
+          "isDeprecated" : false,
+          "deprecationReason" : null
+        }, {
           "name" : "originalQuantity",
           "description" : null,
           "args" : [ ],
@@ -433,6 +444,17 @@
           "isDeprecated" : false,
           "deprecationReason" : null
         }, {
+          "name" : "contractDue",
+          "description" : null,
+          "args" : [ ],
+          "type" : {
+            "kind" : "SCALAR",
+            "name" : "AWSDate",
+            "ofType" : null
+          },
+          "isDeprecated" : false,
+          "deprecationReason" : null
+        }, {
           "name" : "closedDate",
           "description" : null,
           "args" : [ ],
@@ -450,6 +472,17 @@
           "type" : {
             "kind" : "SCALAR",
             "name" : "String",
+            "ofType" : null
+          },
+          "isDeprecated" : false,
+          "deprecationReason" : null
+        }, {
+          "name" : "canceledDate",
+          "description" : null,
+          "args" : [ ],
+          "type" : {
+            "kind" : "SCALAR",
+            "name" : "AWSDate",
             "ofType" : null
           },
           "isDeprecated" : false,
@@ -821,6 +854,15 @@
           },
           "defaultValue" : null
         }, {
+          "name" : "commodity",
+          "description" : null,
+          "type" : {
+            "kind" : "INPUT_OBJECT",
+            "name" : "ModelStringInput",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
           "name" : "originalQuantity",
           "description" : null,
           "type" : {
@@ -857,6 +899,15 @@
           },
           "defaultValue" : null
         }, {
+          "name" : "contractDue",
+          "description" : null,
+          "type" : {
+            "kind" : "INPUT_OBJECT",
+            "name" : "ModelStringInput",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
           "name" : "closedDate",
           "description" : null,
           "type" : {
@@ -867,6 +918,15 @@
           "defaultValue" : null
         }, {
           "name" : "closedBy",
+          "description" : null,
+          "type" : {
+            "kind" : "INPUT_OBJECT",
+            "name" : "ModelStringInput",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
+          "name" : "canceledDate",
           "description" : null,
           "type" : {
             "kind" : "INPUT_OBJECT",
@@ -1867,6 +1927,15 @@
           },
           "defaultValue" : null
         }, {
+          "name" : "commodity",
+          "description" : null,
+          "type" : {
+            "kind" : "SCALAR",
+            "name" : "String",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
           "name" : "originalQuantity",
           "description" : null,
           "type" : {
@@ -1903,6 +1972,15 @@
           },
           "defaultValue" : null
         }, {
+          "name" : "contractDue",
+          "description" : null,
+          "type" : {
+            "kind" : "SCALAR",
+            "name" : "AWSDate",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
           "name" : "closedDate",
           "description" : null,
           "type" : {
@@ -1917,6 +1995,15 @@
           "type" : {
             "kind" : "SCALAR",
             "name" : "String",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
+          "name" : "canceledDate",
+          "description" : null,
+          "type" : {
+            "kind" : "SCALAR",
+            "name" : "AWSDate",
             "ofType" : null
           },
           "defaultValue" : null
@@ -2065,6 +2152,15 @@
           },
           "defaultValue" : null
         }, {
+          "name" : "commodity",
+          "description" : null,
+          "type" : {
+            "kind" : "INPUT_OBJECT",
+            "name" : "ModelStringInput",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
           "name" : "originalQuantity",
           "description" : null,
           "type" : {
@@ -2101,6 +2197,15 @@
           },
           "defaultValue" : null
         }, {
+          "name" : "contractDue",
+          "description" : null,
+          "type" : {
+            "kind" : "INPUT_OBJECT",
+            "name" : "ModelStringInput",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
           "name" : "closedDate",
           "description" : null,
           "type" : {
@@ -2111,6 +2216,15 @@
           "defaultValue" : null
         }, {
           "name" : "closedBy",
+          "description" : null,
+          "type" : {
+            "kind" : "INPUT_OBJECT",
+            "name" : "ModelStringInput",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
+          "name" : "canceledDate",
           "description" : null,
           "type" : {
             "kind" : "INPUT_OBJECT",
@@ -2329,6 +2443,15 @@
           },
           "defaultValue" : null
         }, {
+          "name" : "commodity",
+          "description" : null,
+          "type" : {
+            "kind" : "SCALAR",
+            "name" : "String",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
           "name" : "originalQuantity",
           "description" : null,
           "type" : {
@@ -2365,6 +2488,15 @@
           },
           "defaultValue" : null
         }, {
+          "name" : "contractDue",
+          "description" : null,
+          "type" : {
+            "kind" : "SCALAR",
+            "name" : "AWSDate",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
           "name" : "closedDate",
           "description" : null,
           "type" : {
@@ -2379,6 +2511,15 @@
           "type" : {
             "kind" : "SCALAR",
             "name" : "String",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
+          "name" : "canceledDate",
+          "description" : null,
+          "type" : {
+            "kind" : "SCALAR",
+            "name" : "AWSDate",
             "ofType" : null
           },
           "defaultValue" : null
@@ -2627,6 +2768,15 @@
           },
           "defaultValue" : null
         }, {
+          "name" : "commodity",
+          "description" : null,
+          "type" : {
+            "kind" : "INPUT_OBJECT",
+            "name" : "ModelSubscriptionStringInput",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
           "name" : "originalQuantity",
           "description" : null,
           "type" : {
@@ -2663,6 +2813,15 @@
           },
           "defaultValue" : null
         }, {
+          "name" : "contractDue",
+          "description" : null,
+          "type" : {
+            "kind" : "INPUT_OBJECT",
+            "name" : "ModelSubscriptionStringInput",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
           "name" : "closedDate",
           "description" : null,
           "type" : {
@@ -2673,6 +2832,15 @@
           "defaultValue" : null
         }, {
           "name" : "closedBy",
+          "description" : null,
+          "type" : {
+            "kind" : "INPUT_OBJECT",
+            "name" : "ModelSubscriptionStringInput",
+            "ofType" : null
+          },
+          "defaultValue" : null
+        }, {
+          "name" : "canceledDate",
           "description" : null,
           "type" : {
             "kind" : "INPUT_OBJECT",
@@ -4100,6 +4268,23 @@
         "onFragment" : false,
         "onField" : true
       }, {
+        "name" : "deprecated",
+        "description" : null,
+        "locations" : [ "FIELD_DEFINITION", "ENUM_VALUE" ],
+        "args" : [ {
+          "name" : "reason",
+          "description" : null,
+          "type" : {
+            "kind" : "SCALAR",
+            "name" : "String",
+            "ofType" : null
+          },
+          "defaultValue" : "\"No longer supported\""
+        } ],
+        "onOperation" : false,
+        "onFragment" : false,
+        "onField" : false
+      }, {
         "name" : "aws_oidc",
         "description" : "Tells the service this field/object has access authorized by an OIDC token.",
         "locations" : [ "OBJECT", "FIELD_DEFINITION" ],
@@ -4124,23 +4309,6 @@
             }
           },
           "defaultValue" : null
-        } ],
-        "onOperation" : false,
-        "onFragment" : false,
-        "onField" : false
-      }, {
-        "name" : "deprecated",
-        "description" : null,
-        "locations" : [ "FIELD_DEFINITION", "ENUM_VALUE" ],
-        "args" : [ {
-          "name" : "reason",
-          "description" : null,
-          "type" : {
-            "kind" : "SCALAR",
-            "name" : "String",
-            "ofType" : null
-          },
-          "defaultValue" : "\"No longer supported\""
         } ],
         "onOperation" : false,
         "onFragment" : false,

@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "api": {
+      "contractmanager2": [
+        "Query",
+        "Mutation",
+        "Subscription"
+      ]
+    },
+    "function": {
+      "transactionPDFGen": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    },
+    "storage": {
+      "Contract:@model(appsync)": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    }
+  },
+  "lambdaLayers": []
+}

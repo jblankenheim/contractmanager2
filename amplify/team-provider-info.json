@@ -40,11 +40,19 @@
         },
         "rawTransactionsData": {
           "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
-          "s3Key": "amplify-builds/rawTransactionsData-387356452f6e76565249-build.zip"
+          "s3Key": "amplify-builds/rawTransactionsData-624c394867786b57626c-build.zip"
         },
         "transactionPDFGen": {
           "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
-          "s3Key": "amplify-builds/transactionPDFGen-4468346c565242423764-build.zip"
+          "s3Key": "amplify-builds/transactionPDFGen-4a347179335177536b6d-build.zip"
+        },
+        "runTransactions": {
+          "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
+          "s3Key": "amplify-builds/runTransactions-6438723048526e465276-build.zip"
+        },
+        "closeContract": {
+          "deploymentBucketName": "amplify-contractmanager2-dev-42699-deployment",
+          "s3Key": "amplify-builds/closeContract-6b66315a563079704e72-build.zip"
         }
       }
     }

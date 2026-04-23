@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "api": {
+      "contractmanager2": [
+        "Query",
+        "Mutation",
+        "Subscription"
+      ]
+    },
+    "storage": {
+      "s3contractmanager2storage87f59124": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "Contract:@model(appsync)": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    }
+  },
+  "lambdaLayers": []
+}
