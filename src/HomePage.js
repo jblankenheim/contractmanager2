@@ -8,6 +8,7 @@ import { uploadData } from "aws-amplify/storage";
 import logo from "./assets/CFE_Logo.png";
 import ReviewAndLock from "./ReviewAndLock";
 import ReviewForClose from "./ReviewForClose";
+import React, { useState, useEffect, useCallback } from 'react';
 
 const client = generateClient();
 
@@ -46,12 +47,33 @@ export default function HomePage({ user, signOut }) {
   fetchContracts();
 }, []);
 
+const fetchAllContracts = useCallback(async () => {
+  let allItems = [];
+  let nextToken = null;
+  try {
+    do {
+      const res = await client.graphql({
+        query: listContracts,
+        variables: { limit: 1000, nextToken: nextToken },
+      });
+      const items = res.data.listContracts.items;
+      allItems = [...allItems, ...items];
+      nextToken = res.data.listContracts.nextToken;
+    } while (nextToken);
+
+    return allItems.sort((a, b) => 
+      (b.contractNumber || "").localeCompare(a.contractNumber || "")
+    );
+  } catch (err) {
+    console.error("Batch fetch failed", err);
+    return [];
+  }
+}, []); // No dependencies needed for this one usually
+
+// 2. Your existing fetchContracts logic (now with a stable fetchAllContracts)
 const fetchContracts = useCallback(async () => {
   try {
-    // 1. Fetch and sort the data
     const allItems = await fetchAllContracts();
-
-    // 2. Process media for those items
     const withMedia = await Promise.all(
       allItems.map(async (c) => {
         const parseKey = (key) => {
@@ -70,9 +92,7 @@ const fetchContracts = useCallback(async () => {
           c.addendumKey1,
           c.addendumKey2,
           c.duplicateKey,
-        ]
-          .map(parseKey)
-          .filter(Boolean);
+        ].map(parseKey).filter(Boolean);
 
         const media = await Promise.all(
           keys.map(async (key) => {
@@ -84,12 +104,9 @@ const fetchContracts = useCallback(async () => {
             };
           })
         );
-
         return { ...c, media };
       })
     );
-
-    // 3. Update state
     setContracts(withMedia);
     setFiltered(withMedia);
   } catch (err) {
@@ -97,33 +114,10 @@ const fetchContracts = useCallback(async () => {
   }
 }, [fetchAllContracts, getUrl, setContracts, setFiltered]);
 
-
+// 3. One single useEffect to trigger it all
 useEffect(() => {
   fetchContracts();
 }, [fetchContracts]);
-
-async function fetchAllContracts() {
-  let allItems = [];
-  let nextToken = null;
-  try {
-    do {
-      const res = await client.graphql({
-        query: listContracts,
-        variables: { limit: 1000, nextToken: nextToken },
-      });
-      const items = res.data.listContracts.items;
-      allItems = [...allItems, ...items];
-      nextToken = res.data.listContracts.nextToken;
-    } while (nextToken);
-
-    return allItems.sort((a, b) =>
-      (b.contractNumber || "").localeCompare(a.contractNumber || "")
-    );
-  } catch (err) {
-    console.error("Batch fetch failed", err);
-    return []; // Return empty array on failure to prevent map errors
-  }
-}
 /* ========================= FILTER BAR LOGIC ========================= */
   useEffect(() => {
     let data = [...contracts];
