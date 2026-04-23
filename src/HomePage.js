@@ -28,7 +28,7 @@ export default function HomePage({ user, signOut }) {
   const [activeMedia, setActiveMedia] = useState(null);
 
   // Multi-PDF viewer (row click)
-  const [activeContractMedia, setActiveContractMedia] = useState(nul;
+  const [activeContractMedia, setActiveContractMedia] = useState(null);
  
 
   const [showUploadContract, setShowUploadContract] = useState(false);
