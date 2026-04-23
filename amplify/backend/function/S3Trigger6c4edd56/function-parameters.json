@@ -1,25 +1,3 @@
 {
-  "permissions": {
-    "api": {
-      "contractmanager2": [
-        "Query",
-        "Mutation",
-        "Subscription"
-      ],
-      "contractsAPI": [
-        "create",
-        "read",
-        "update",
-        "delete"
-      ]
-    },
-    "function": {
-      "submitEditedContractLambda": [
-        "create",
-        "read",
-        "update",
-        "delete"
-      ]
-    }
-  }
+  "permissions": {}
 }
