@@ -4,7 +4,7 @@ import '@aws-amplify/ui-react/styles.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import logo from './assets/CFE_Logo.png';
 import HomePage from './HomePage';
-import ReviewPage from './ReviewPage';
+
 
 const myTheme = {
   name: 'custom-theme',
@@ -37,7 +37,7 @@ export default function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<HomePage user={user} signOut={signOut} />} />
-                <Route path="/review" element={<ReviewPage />} />
+                
               </Routes>
             </BrowserRouter>
           )}
