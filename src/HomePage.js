@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { generateClient } from "aws-amplify/api";
 import { getUrl } from "aws-amplify/storage";
 import { listContracts } from "./graphql/queries";
