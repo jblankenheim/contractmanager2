@@ -29,12 +29,7 @@ export default function HomePage({ user, signOut }) {
 
   // Multi-PDF viewer (row click)
   const [activeContractMedia, setActiveContractMedia] = useState(null);
-  /*
-    {
-      pdfs: [{ url, type }],
-      activeIndex: number
-    }
-  */
+ 
 
   const [showUploadContract, setShowUploadContract] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
@@ -51,7 +46,7 @@ export default function HomePage({ user, signOut }) {
   fetchContracts();
 }, []);
 
-async function fetchContracts() {
+const fetchContracts = useCallback(async () => {
   try {
     // 1. Fetch and sort the data
     const allItems = await fetchAllContracts();
@@ -89,6 +84,7 @@ async function fetchContracts() {
             };
           })
         );
+
         return { ...c, media };
       })
     );
@@ -99,7 +95,12 @@ async function fetchContracts() {
   } catch (err) {
     console.error("Error in fetchContracts:", err);
   }
-}
+}, [fetchAllContracts, getUrl, setContracts, setFiltered]);
+
+
+useEffect(() => {
+  fetchContracts();
+}, [fetchContracts]);
 
 async function fetchAllContracts() {
   let allItems = [];
