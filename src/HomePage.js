@@ -293,9 +293,11 @@ useEffect(() => {
                 <th style={{ textAlign: "left", padding: "12px" }}>Contract #</th>
                 <th style={{ textAlign: "left", padding: "12px" }}>Name</th>
                 <th style={{ textAlign: "left", padding: "12px" }}>Type</th>
+                <th style={{ textAlign: "left", padding: "12px" }}>Date:</th>
                 <th style={{ textAlign: "left", padding: "12px" }}>Commodity</th>
                 <th style={{ textAlign: "left", padding: "12px" }}>Quantity</th>
                 <th style={{ textAlign: "left", padding: "12px" }}>Docs</th>
+                 <th style={{ textAlign: "left", padding: "12px" }}>Due:</th>
                 <th style={{ textAlign: "left", padding: "12px" }}>Signed</th>
                 <th style={{ textAlign: "left", padding: "12px" }}>Closed</th>
               </tr>
@@ -326,6 +328,7 @@ useEffect(() => {
                   <td style={{ padding: "12px" }}>{c.contractNumber}</td>
                   <td style={{ padding: "12px" }}>{c.name || ""}</td>
                   <td style={{ padding: "12px" }}>{c.contractType}</td>
+                  <td style={{ padding: "12px" }}>{c.contractDate|| ""}</td>
                   <td style={{ padding: "12px" }}>{c.commodity || ""}</td>
                   <td style={{ padding: "12px" }}>{c.originalQuantity || ""}</td>
                   <td style={{ padding: "12px" }}>
@@ -342,6 +345,7 @@ useEffect(() => {
                       </button>
                     ))}
                   </td>
+                  <td style={{ padding: "12px" }}>{c.contractDue ?? ""}</td>
                   <td style={{ color: c.pictureKey ? "#238636" : "#d73a49", padding: "12px" }}>
                     {c.pictureKey ? "Signed" : "Unsigned"}
                   </td>

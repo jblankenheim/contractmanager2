@@ -1,12 +1,6 @@
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { LambdaClient, InvokeCommand } = require("@aws-sdk/client-lambda");
-const lambda = new LambdaClient({});
-const {
-  DynamoDBDocumentClient,
-  UpdateCommand,
-} = require("@aws-sdk/lib-dynamodb");
-
+const { DynamoDBDocumentClient, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
 const { parse } = require("csv-parse/sync");
 
 const s3Client = new S3Client({});
@@ -16,6 +10,7 @@ const dynamodb = DynamoDBDocumentClient.from(ddbClient);
 const TABLE_NAME = process.env.API_CONTRACTMANAGER2_CONTRACTTABLE_NAME;
 const BUCKET = process.env.STORAGE_S3CONTRACTMANAGER2STORAGE87F59124_BUCKETNAME;
 
+// Removed contractDue from here so it is no longer mandatory
 const REQUIRED_FIELDS = [
   "contractType",
   "contractNumber",
@@ -23,244 +18,159 @@ const REQUIRED_FIELDS = [
   "location",
   "contractDate",
   "originalQuantity",
-  "remainingQuantity",
+  "remainingQuantity"
 ];
 
-
-function parseCsvNumber(value, fieldName, errors) {
-  if (value === undefined || value === null) {
-    errors.push(`Missing ${fieldName}`);
-    return null;
-  }
-
-  const cleaned = String(value).replace(/,/g, "").trim();
-  const n = Number(cleaned);
-
-  if (!Number.isFinite(n)) {
-    errors.push(`Invalid number for ${fieldName}: ${value}`);
-    return null;
-  }
-
-  return n;
-}
-
-
-// ======================
-// ✅ BATCH PROCESSOR (KEY TO PERFORMANCE)
-// ======================
-async function processInBatches(items, batchSize = 5) {
-  let results = [];
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batch = items.slice(i, i + batchSize);
-    const batchResults = await Promise.all(batch.map(upsertContract));
-    results = results.concat(batchResults);
-  }
-  return results;
-}
-
-exports.handler = async (event) => {
-  try {
-    const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
-    const fileKey = body.file;
-
-    if (!fileKey) {
-      return response(400, { error: "Missing file key" });
-    }
-
-    // 1. Load and parse the CSV
-    const csvText = await loadS3File(fileKey);
-    const rows = parseCsv(csvText);
-
-    const validRows = [];
-    const invalidRows = [];
-
-    // 2. Validate the rows and fill validRows array
-    for (const rawRow of rows) {
-      const validation = validateAndCleanRow(rawRow);
-      if (!validation.ok) {
-        invalidRows.push({
-          row: rawRow.__rowNumber,
-          errors: validation.errors,
-        });
-      } else {
-        validRows.push(validation.cleanRow);
-      }
-    }
-
-    // 3. NOW call the batch processor with the filled validRows
-    const results = await processInBatches(validRows, 5);
-
-    // 4. Calculate the counts for the response
-    const updatedIds = results.filter(r => r.status === "updated").map(r => r.id);
-    const closedIds = results.filter(r => r.status === "closed").map(r => r.id);
-
-    return response(200, {
-      processed: rows.length,
-      valid: validRows.length,
-      updatedCount: updatedIds.length,
-      closedCount: closedIds.length,
-      closedContractIds: closedIds,
-      invalidRows,
-    });
-
-  } catch (err) {
-    console.error(err);
-    return response(500, { error: err.message });
-  }
-};
-
-
-// ======================
+// --- HELPERS ---
 async function loadS3File(key) {
-  const res = await s3Client.send(
-    new GetObjectCommand({ Bucket: BUCKET, Key: key })
-  );
+  console.log(`[S3] Fetching: ${key}`);
+  const res = await s3Client.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
   return res.Body.transformToString();
 }
 
-
-// ======================
-function parseCsv(data) {
-  return parse(data, {
-    columns: true,
-    skip_empty_lines: true,
-    trim: true,
-  }).map((r, i) => ({
-    ...r,
-    __rowNumber: i + 2,
-  }));
-}
-
-
-
-function validateAndCleanRow(rawRow) {
-  const errors = [];
-
-  for (const field of REQUIRED_FIELDS) {
-    const value = rawRow[field];
-    if (value === undefined || value === null || String(value).trim() === "") {
-      errors.push(`Missing ${field}`);
-    }
-  }
-
-  const contractDate = normalizeAWSDate(rawRow.contractDate);
-  if (!contractDate) errors.push("Invalid contractDate format");
-
-  const originalQuantity = parseCsvNumber(
-    rawRow.originalQuantity,
-    "originalQuantity",
-    errors
-  );
-
-  const remainingQuantity = parseCsvNumber(
-    rawRow.remainingQuantity,
-    "remainingQuantity",
-    errors
-  );
-
-  if (errors.length > 0) {
-    return { ok: false, errors };
-  }
-
-  return {
-    ok: true,
-    cleanRow: {
-      contractType: rawRow.contractType,
-      contractNumber: rawRow.contractNumber,
-      name: rawRow.name,
-      location: rawRow.location,
-      contractDate,
-      originalQuantity,
-      remainingQuantity,
-      commodity: rawRow.commodity?.trim() || null   
-    },
-  };
-}
-
-
-
 function normalizeAWSDate(value) {
   if (!value) return null;
-
   const v = String(value).trim();
-
   if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
-
   const parts = v.split("/");
   if (parts.length === 3) {
     let [month, day, year] = parts;
     return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   }
-
   const d = new Date(v);
-  if (!isNaN(d.getTime())) {
-    return d.toISOString().split("T")[0];
-  }
-
-  return null;
+  return !isNaN(d.getTime()) ? d.toISOString().split("T")[0] : null;
 }
 
-
+function parseCsvNumber(value, fieldName, errors) {
+  const cleaned = String(value || "").replace(/,/g, "").trim();
+  if (cleaned === "") {
+    errors.push(`Missing number: ${fieldName}`);
+    return 0;
+  }
+  const n = Number(cleaned);
+  if (!Number.isFinite(n)) {
+    errors.push(`Invalid number for ${fieldName}: ${value}`);
+    return 0;
+  }
+  return n;
+}
 
 async function upsertContract(row) {
   const id = `${row.contractType}_${row.contractNumber}`;
   const now = new Date().toISOString();
-
   try {
-    await dynamodb.send(
-      new UpdateCommand({
-        TableName: TABLE_NAME,
-        Key: { id },
-       
-        ConditionExpression: "attribute_not_exists(closedBy) AND attribute_not_exists(closedDate)",
-        UpdateExpression: `
-  SET contractType = :contractType,
-      contractNumber = :contractNumber,
-      #name = :name,
-      #location = :location,
-      contractDate = :contractDate,
-      originalQuantity = :originalQuantity,
-      remainingQuantity = :remainingQuantity,
-      commodity = :commodity,        
-      updatedAt = :updatedAt,
-      createdAt = if_not_exists(createdAt, :createdAt)
-`,
-        ExpressionAttributeNames: {
-          "#name": "name",
-          "#location": "location",
-        },
-        ExpressionAttributeValues: {
-          ":contractType": row.contractType,
-          ":contractNumber": row.contractNumber,
-          ":name": row.name,
-          ":location": row.location,
-          ":contractDate": row.contractDate,
-          ":originalQuantity": row.originalQuantity,
-          ":remainingQuantity": row.remainingQuantity,
-          ":commodity": row.commodity,
-          ":updatedAt": now,
-          ":createdAt": now,
-        },
-      })
-    );
+    await dynamodb.send(new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { id },
+      UpdateExpression: `
+        SET contractType = :ct, 
+            contractNumber = :cn, 
+            #name = :n, 
+            #loc = :l, 
+            contractDate = :cd, 
+            originalQuantity = :oq, 
+            remainingQuantity = :rq, 
+            contractDue = :cDue, 
+            updatedAt = :u, 
+            createdAt = if_not_exists(createdAt, :u)
+      `,
+      ExpressionAttributeNames: { "#name": "name", "#loc": "location" },
+      ExpressionAttributeValues: {
+        ":ct": row.contractType,
+        ":cn": row.contractNumber,
+        ":n": row.name,
+        ":l": row.location,
+        ":cd": row.contractDate,
+        ":oq": row.originalQuantity,
+        ":rq": row.remainingQuantity,
+        ":cDue": row.contractDue, // This will be the normalized string or null
+        ":u": now
+      },
+    }));
     return { id, status: "updated" };
   } catch (err) {
-    if (err.name === "ConditionalCheckFailedException") {
-
-      return { id, status: "closed" };
-    }
-    throw err; 
+    console.error(`[DDB Error] ${id}:`, err.message);
+    return { id, status: "error", error: err.message };
   }
 }
 
+// --- HANDLER ---
+exports.handler = async (event) => {
+  console.log("--- Execution Started ---");
+  try {
+    const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+    const fileKey = body.file;
 
-function response(statusCode, body) {
-  return {
-    statusCode,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "*",
-    },
-    body: JSON.stringify(body),
-  };
-}
+    if (!fileKey) return { statusCode: 400, body: JSON.stringify({ error: "Missing file" }) };
+
+    const csvText = await loadS3File(fileKey);
+    const rawRows = parse(csvText, { columns: true, skip_empty_lines: true, trim: true });
+
+    const rows = rawRows.map(row => {
+      const cleanRow = {};
+      Object.keys(row).forEach(key => {
+        const cleanKey = key.trim().replace(/\s+/g, '');
+        const camelKey = cleanKey.charAt(0).toLowerCase() + cleanKey.slice(1);
+        cleanRow[camelKey] = row[key];
+      });
+      return cleanRow;
+    });
+
+    const validRows = [];
+    const invalidRows = [];
+
+    for (const [index, rawRow] of rows.entries()) {
+      const errors = [];
+
+      // Validate mandatory fields
+      REQUIRED_FIELDS.forEach(f => {
+        if (!rawRow[f] || String(rawRow[f]).trim() === "") errors.push(`Missing ${f}`);
+      });
+
+      const contractDate = normalizeAWSDate(rawRow.contractDate);
+      if (!contractDate) errors.push(`Bad Date: ${rawRow.contractDate}`);
+
+      // Handle optional contractDue
+      let contractDue = null;
+      if (rawRow.contractDue && String(rawRow.contractDue).trim() !== "") {
+        contractDue = normalizeAWSDate(rawRow.contractDue);
+        if (!contractDue) {
+          errors.push(`Invalid optional date format for contractDue: ${rawRow.contractDue}`);
+        }
+      }
+
+      if (errors.length > 0) {
+        invalidRows.push({ row: index + 2, errors });
+      } else {
+        validRows.push({
+          ...rawRow,
+          contractDate,
+          contractDue,
+          originalQuantity: parseCsvNumber(rawRow.originalQuantity, "oq", errors),
+          remainingQuantity: parseCsvNumber(rawRow.remainingQuantity, "rq", errors)
+        });
+      }
+    }
+
+    if (validRows.length > 0) {
+      for (let i = 0; i < validRows.length; i += 5) {
+        const batch = validRows.slice(i, i + 5);
+        await Promise.all(batch.map(upsertContract));
+      }
+    }
+
+    return {
+      statusCode: 200,
+      headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" },
+      body: JSON.stringify({
+        total: rows.length,
+        valid: validRows.length,
+        invalid: invalidRows.length,
+        sampleErrors: invalidRows.slice(0, 3)
+      })
+    };
+  } catch (err) {
+    console.error("FATAL ERROR:", err);
+    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+  }
+};

@@ -11,7 +11,6 @@ const BUCKET = process.env.STORAGE_S3CONTRACTMANAGER2STORAGE87F59124_BUCKETNAME;
 
 exports.handler = async (event) => {
   try {
-    // 1. Find contracts needing updates
     const { Items } = await ddb.send(new ScanCommand({
       TableName: TABLE_NAME,
       FilterExpression: "needsTransactionKey = :t",
@@ -26,61 +25,43 @@ exports.handler = async (event) => {
             id, 
             contractType, 
             contractNumber, 
-            transactionDates, 
+            transactionDates = [], 
             pictureKey, 
             locked = false, 
             transactionKeyPages = 0 
         } = contract;
 
-const transDoc = await PDFDocument.create();
-const font = await transDoc.embedFont(StandardFonts.Courier);
-const boldFont = await transDoc.embedFont(StandardFonts.CourierBold);
+        // 1. GENERATE THE TRANSACTION PDF
+        const transDoc = await PDFDocument.create();
+        const font = await transDoc.embedFont(StandardFonts.Courier);
+        const boldFont = await transDoc.embedFont(StandardFonts.CourierBold);
 
-let currentPage = transDoc.addPage();
-let { width, height } = currentPage.getSize();
-let y = height - 50;
+        let currentPage = transDoc.addPage();
+        const { width, height } = currentPage.getSize();
+        let y = height - 50;
 
-// Header
-currentPage.drawText(`Transactions for contract ID: ${id}`, { x: 50, y, size: 14, font: boldFont });
-y -= 40;
+        currentPage.drawText(`Transactions for contract ID: ${id}`, { x: 50, y, size: 14, font: boldFont });
+        y -= 40;
 
-// Table Header - Updated to include Settled To
-// Adjusted spacing: Date(12), Qty(10), Rem(10), Dol(10), Settled(15), Check#(10)
-currentPage.drawText(
-    "Date         Quantity  Remaining Dollars   Settled To      Check#", 
-    { x: 50, y, size: 10, font: boldFont }
-);
-y -= 20;
+        currentPage.drawText("Date         Quantity  Remaining Dollars   Settled To      Check#", { x: 50, y, size: 10, font: boldFont });
+        y -= 20;
 
-// Table Rows
-(transactionDates || []).forEach(t => {
-    const dateStr = String(t.date || '').padEnd(13);
-    const qtyStr  = String(t.quantity || '').padEnd(10);
-    const remStr  = String(t.remainingQuantity || '').padEnd(10);
-    const dolStr  = String(t.dollars || '').padEnd(10);
-    // New Field
-    const setStr  = String(t.settledTo || '').substring(0, 14).padEnd(16); 
-    const chkStr  = String(t.checkNumber || '');
+        transactionDates.forEach(t => {
+            const line = `${String(t.date || '').padEnd(13)}${String(t.quantity || '').padEnd(10)}${String(t.remainingQuantity || '').padEnd(10)}${String(t.dollars || '').padEnd(10)}${String(t.settledTo || '').substring(0, 14).padEnd(16)}${String(t.checkNumber || '')}`;
+            currentPage.drawText(line, { x: 50, y, size: 10, font });
+            y -= 14;
 
-    const line = `${dateStr}${qtyStr}${remStr}${dolStr}${setStr}${chkStr}`;
-    
-    currentPage.drawText(line, { x: 50, y, size: 10, font });
-    y -= 14;
-
-    if (y < 50) {
-        currentPage = transDoc.addPage();
-        y = height - 50;
-    }
-});
+            if (y < 50) {
+                currentPage = transDoc.addPage();
+                y = height - 50;
+            }
+        });
 
         const transPdfBytes = await transDoc.save();
         const newTransPageCount = transDoc.getPageCount();
 
-        // ==================================================
-        // STEP 2: SAVE TRANSACTION PDF TO S3
-        // ==================================================
+        // 2. SAVE STANDALONE TRANSACTION PDF
         const transKey = `public/contracts/${contractType}/${contractNumber}/transactions_${Date.now()}.pdf`;
-        
         await s3.send(new PutObjectCommand({
           Bucket: BUCKET,
           Key: transKey,
@@ -88,71 +69,58 @@ y -= 20;
           ContentType: 'application/pdf'
         }));
 
-        // Prepare DB Update
-        let updateExpression = 'SET needsTransactionKey = :f, updatedAt = :u, transactionKey = :tk';
-        let expValues = {
-          ':f': false,
-          ':u': new Date().toISOString(),
-          ':tk': transKey
-        };
-
-        // ==================================================
-        // STEP 3: HANDLE LOCKED CONTRACTS (Append Logic)
-        // ==================================================
+        // 3. APPEND TO PICTUREKEY (ONLY IF LOCKED)
         if (locked && pictureKey) {
-            console.log(`Contract ${id} is LOCKED. Updating pictureKey PDF...`);
-
-            // Load original PDF
+            console.log(`Updating ${pictureKey} for contract ${id}`);
+            
             const originalObj = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: pictureKey }));
             const originalBytes = await originalObj.Body.transformToByteArray();
             const mainDoc = await PDFDocument.load(originalBytes);
 
-            // Remove old appended pages
-            const pagesToRemove = Number.isInteger(transactionKeyPages) ? transactionKeyPages : 0;
-            const totalPages = mainDoc.getPageCount();
-            const safeToRemove = Math.min(pagesToRemove, totalPages);
+            // Safety cleanup: Remove exactly the number of pages we previously added
+            const pagesToRemove = parseInt(transactionKeyPages || 0, 10);
+            const totalPagesBefore = mainDoc.getPageCount();
+            
+            // Never delete the entire document; leave at least 1 page (the contract)
+            const safeToRemove = Math.min(pagesToRemove, totalPagesBefore - 1);
 
             for (let i = 0; i < safeToRemove; i++) {
                 mainDoc.removePage(mainDoc.getPageCount() - 1);
             }
 
-            // Append new transaction pages
+            // Append new pages
             const freshTransDoc = await PDFDocument.load(transPdfBytes);
             const copiedPages = await mainDoc.copyPages(freshTransDoc, freshTransDoc.getPageIndices());
-            copiedPages.forEach((page) => mainDoc.addPage(page));
+            copiedPages.forEach(p => mainDoc.addPage(p));
 
-            // Save updated PDF
             const updatedMainBytes = await mainDoc.save();
-            
             await s3.send(new PutObjectCommand({
                 Bucket: BUCKET,
                 Key: pictureKey,
                 Body: updatedMainBytes,
                 ContentType: 'application/pdf'
             }));
-
-            // Update DB with new page count
-            updateExpression += ', transactionKeyPages = :tkp';
-            expValues[':tkp'] = newTransPageCount;
         }
 
-        // ==================================================
-        // STEP 4: FINAL DB UPDATE
-        // ==================================================
+        // 4. DATABASE UPDATE
         await ddb.send(new UpdateCommand({
             TableName: TABLE_NAME,
             Key: { id },
-            UpdateExpression: updateExpression,
-            ExpressionAttributeValues: expValues
+            UpdateExpression: 'SET needsTransactionKey = :f, updatedAt = :u, transactionKey = :tk, transactionKeyPages = :tkp',
+            ExpressionAttributeValues: {
+                ':f': false,
+                ':u': new Date().toISOString(),
+                ':tk': transKey,
+                ':tkp': newTransPageCount
+            }
         }));
 
-        console.log(`Successfully processed ${id}`);
+        console.log(`Success: ${id}`);
       } catch (err) {
-        console.error(`Error processing contract ${contract.id}:`, err);
+        console.error(`Failed contract ${contract.id}:`, err);
       }
     }
-
-    return { message: "Processing complete" };
+    return { message: "Done" };
   } catch (err) {
     console.error("Scan Error:", err);
     throw err;
